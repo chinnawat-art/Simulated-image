@@ -1,0 +1,286 @@
+﻿<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>จำลองประตู - Door Visualizer Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Supabase JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="desktop.css">
+<link rel="stylesheet" href="mobile.css" media="screen and (max-width: 980px)">
+</head>
+<body>
+<div class="wrap">
+  <!-- Hero Header -->
+  <header class="hero-nav">
+    <div class="brand-group">
+      <div class="brand-badge">
+        <div class="cga-alutech-logo">
+          <span class="brand-cga">CGA</span>
+          <span class="brand-alutech">Alutech</span>
+        </div>
+        <span class="sub-badge">DOOR VISUALIZER PRO</span>
+      </div>
+    </div>
+    <div class="action-toolbar" style="margin-left:auto;">
+      <button class="btn" id="copySpecBtn" title="คัดลอกรายละเอียดที่เลือก">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        คัดลอกสเปก
+      </button>
+      <button class="btn btn-primary" id="downloadImgBtn" title="บันทึกภาพตัวอย่างจำลอง">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        ดาวน์โหลดรูปจำลอง
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Grid Layout -->
+  <div class="layout">
+    <!-- Left Column: Interactive Preview Stage & Spec Bar -->
+    <div class="preview-wrapper">
+      <div class="stage-card">
+        <div class="stage-toolbar">
+          <div class="stage-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            ตัวอย่างภาพสมจริง Real-time
+          </div>
+          <div class="stage-controls">
+            <div class="pill-group">
+              <button class="pill-btn active" id="lightToggleBtn" title="เปลี่ยนโทนแสงสว่าง">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                <span class="pill-label">ปกติ</span>
+              </button>
+              <button class="pill-btn" id="dimToggleBtn" title="แสดง/ซ่อน ขนาดมิติ">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8v8M21 8v8M3 12h18"/><path d="M7 9v-2M11 9v-2M15 9v-2M19 9v-2M7 17v-2M11 17v-2M15 17v-2M19 17v-2"/></svg>
+                <span class="pill-label">ขนาด</span>
+              </button>
+              <button class="pill-btn" id="zoomBtn" title="ขยายรูปภาพเต็มจอ">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                <span class="pill-label">ขยาย</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage" id="stage">
+          <img class="scene-img" id="sceneImg" src="" alt="scene" />
+          <div class="door-wrap" id="doorWrap">
+            <img id="doorImg" src="" alt="door" />
+            <img id="handleImg" src="" alt="handle" />
+            <div class="dim-overlay" id="dimOverlay">
+              <div class="dim-line-v">
+                <span class="dim-label">200 ซม.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Specification Summary -->
+      <div class="spec-card">
+        <div class="spec-header">สรุปรายการอุปกรณ์ที่เลือก</div>
+        <div class="spec-details">
+          <div class="spec-item">
+            <span class="label">แบรนด์สินค้า</span>
+            <span class="value" style="color: var(--accent-gold-dark);">CGA-Alutech</span>
+          </div>
+          <div class="spec-item">
+            <span class="label">ฉากห้อง</span>
+            <span class="value" id="specScene">-</span>
+          </div>
+          <div class="spec-item">
+            <span class="label">ประเภทประตู</span>
+            <span class="value" id="specDoorType">บานเลื่อน</span>
+          </div>
+          <div class="spec-item">
+            <span class="label">สีบานประตู</span>
+            <span class="value" id="specDoorColor">-</span>
+          </div>
+          <div class="spec-item">
+            <span class="label">ลายบานประตู</span>
+            <span class="value" id="specDoor">-</span>
+          </div>
+          <div class="spec-item">
+            <span class="label">มือจับประตู</span>
+            <span class="value" id="specHandle">-</span>
+          </div>
+          <div class="spec-item">
+            <span class="label">ขนาดประตู</span>
+            <span class="value" id="specDoorSize">200 x 200 ซม.</span>
+          </div>
+          <div class="spec-item" style="border-top: 1px dashed var(--line); padding-top: 6px; margin-top: 4px;">
+            <span class="label">รหัส SKU</span>
+            <span class="value" id="specSku" style="font-family: monospace; font-weight: 700; color: var(--accent-gold-dark);">CGA-SL-BRZ-200x200-H1</span>
+          </div>
+          <div class="spec-item" id="specPriceRow" style="padding-top: 4px;">
+            <span class="label">ราคา</span>
+            <span class="value" id="specPrice" style="font-weight: 700; font-size: 15px; color: var(--accent-gold-dark);">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Selection Panel -->
+    <div class="panel-card">
+
+      <!-- Category Tabs (Wizard Stepper) -->
+      <nav class="nav-tabs" role="tablist">
+        <button class="tab-btn active" data-tab="scene" id="tabStep1">
+          <span class="tab-num">01</span>
+          <span class="tab-title">ฉากห้อง</span>
+        </button>
+        <button class="tab-btn" data-tab="door" id="tabStep2">
+          <span class="tab-num">02</span>
+          <span class="tab-title">บานประตู</span>
+        </button>
+        <button class="tab-btn" data-tab="handle" id="tabStep3">
+          <span class="tab-num">03</span>
+          <span class="tab-title">มือจับประตู</span>
+        </button>
+        <button class="tab-btn" data-tab="all" id="tabStepAll">
+          <span class="tab-num">ALL</span>
+          <span class="tab-title">แสดงทั้งหมด</span>
+        </button>
+      </nav>
+
+      <!-- Category Content Sections -->
+      <div class="panel-content">
+      <div class="category-section active" id="sec-scene">
+        <div class="section-header">
+          <div>
+            <div class="section-title">🖼️ ขั้นตอนที่ 1: เลือกฉากห้อง <span class="item-count-badge" id="sceneCountBadge">0</span></div>
+            <div class="section-desc">โทนสีผนังและบรรยากาศภายในห้องที่ต้องการจำลอง</div>
+          </div>
+        </div>
+        <div class="search-wrapper">
+          <span class="search-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input type="text" class="search-input" id="searchSceneInput" placeholder="ค้นหาฉากห้อง..." />
+        </div>
+        <div class="swatches-grid" id="sceneSwatches"></div>
+        <div class="section-wizard-nav">
+          <div></div>
+          <button class="nav-btn primary" id="toStep2Btn">เลือกบานประตูถัดไป ➔</button>
+        </div>
+      </div>
+
+      <div class="category-section" id="sec-door">
+        <div class="section-header">
+          <div>
+            <div class="section-title">🚪 ขั้นตอนที่ 2: เลือกบานประตู <span class="item-count-badge" id="doorCountBadge">0</span></div>
+            <div class="section-desc">เลือกประเภท สี ลวดลาย และขนาดของบานประตูอลูมิเนียม</div>
+          </div>
+        </div>
+
+        <!-- Door Sub-Filters: Type, Color, Size -->
+        <div class="door-filter-controls">
+          <div class="sub-filter-group">
+            <span class="sub-filter-label">🏷️ ประเภทประตู:</span>
+            <div class="chip-group" id="doorTypeChips">
+              <button class="chip-btn active" data-type="all">ทั้งหมด</button>
+              <button class="chip-btn" data-type="sliding">🚪 บานเลื่อน</button>
+              <button class="chip-btn" data-type="fix">🪟 บาน Fix</button>
+            </div>
+          </div>
+
+          <div class="sub-filter-group" id="doorColorGroup">
+            <span class="sub-filter-label">🎨 สีบานประตู:</span>
+            <div class="chip-group" id="doorColorChips"></div>
+          </div>
+
+          <div class="sub-filter-group" id="doorSizeGroup">
+            <span class="sub-filter-label">📐 ขนาดประตู:</span>
+            <div class="size-select-wrapper">
+              <div class="select-field">
+                <label for="doorWidthSelect">กว้าง:</label>
+                <select id="doorWidthSelect" class="custom-select">
+                  <option value="200">200 ซม.</option>
+                  <option value="220">220 ซม.</option>
+                  <option value="240">240 ซม.</option>
+                  <option value="260">260 ซม.</option>
+                  <option value="280">280 ซม.</option>
+                  <option value="300">300 ซม.</option>
+                </select>
+              </div>
+              <span class="size-times">×</span>
+              <div class="select-field">
+                <label for="doorHeightSelect">สูง:</label>
+                <select id="doorHeightSelect" class="custom-select">
+                  <option value="200">200 ซม.</option>
+                  <option value="220">220 ซม.</option>
+                  <option value="240">240 ซม.</option>
+                  <option value="260">260 ซม.</option>
+                  <option value="280">280 ซม.</option>
+                  <option value="300">300 ซม.</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="search-wrapper">
+          <span class="search-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input type="text" class="search-input" id="searchDoorInput" placeholder="ค้นหาบานประตู..." />
+        </div>
+        <div class="swatches-grid" id="doorSwatches"></div>
+        <div class="section-wizard-nav">
+          <button class="nav-btn" id="backToStep1Btn">⬅ ย้อนกลับไปฉากห้อง</button>
+          <button class="nav-btn primary" id="toStep3Btn">เลือกมือจับประตูถัดไป ➔</button>
+        </div>
+      </div>
+
+      <div class="category-section" id="sec-handle">
+        <div class="section-header">
+          <div>
+            <div class="section-title">🔑 ขั้นตอนที่ 3: เลือกมือจับประตู <span class="item-count-badge" id="handleCountBadge">0</span></div>
+            <div class="section-desc">ดีไซน์และโทนสีของลูกบิด/มือจับอลูมิเนียม</div>
+          </div>
+        </div>
+        <div class="search-wrapper">
+          <span class="search-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input type="text" class="search-input" id="searchHandleInput" placeholder="ค้นหามือจับประตู..." />
+        </div>
+        <div class="swatches-grid" id="handleSwatches"></div>
+        <div class="section-wizard-nav">
+          <button class="nav-btn" id="backToStep2Btn">⬅ ย้อนกลับไปบานประตู</button>
+          <button class="nav-btn primary" id="finishSelectionBtn">✨ สรุปการเลือกทั้งหมด</button>
+          </div><!-- /.section-wizard-nav -->
+        </div><!-- /#sec-handle -->
+      </div><!-- /.panel-content -->
+    </div><!-- /.panel-card -->
+  </div>
+
+  <footer>CGA-Alutech Door Visualizer · ภาพประกอบใช้เพื่อการจำลองการออกแบบเท่านั้น สีจริงอาจแตกต่างเล็กน้อยตามสภาพแสงและเนื้อวัสดุจริง</footer>
+</div>
+
+<!-- Fullscreen Zoom Modal -->
+<div class="modal-overlay" id="zoomModal">
+  <div class="modal-container">
+    <button class="modal-close-btn" id="closeZoomBtn" title="ปิดหน้าต่าง">✕</button>
+    <div class="modal-toolbar">
+      <button class="modal-tool-btn" id="zoomOutBtn" type="button" title="ย่อภาพ">−</button>
+      <button class="modal-tool-btn" id="zoomResetBtn" type="button" title="รีเซ็ตการซูม">รีเซ็ต</button>
+      <button class="modal-tool-btn" id="zoomInBtn" type="button" title="ขยายภาพ">+</button>
+      <div class="modal-zoom-hint">หมุนล้อเมาส์เพื่อซูม และลากเพื่อเลื่อนดูรายละเอียด</div>
+    </div>
+    <div class="modal-stage-view" id="modalStageView"></div>
+  </div>
+</div>
+
+<!-- Mobile Floating Action Bar -->
+<div class="mobile-float-bar" id="mobileFloatBar">
+  <div class="mobile-spec-summary">
+    <span class="mobile-spec-brand">CGA-ALUTECH</span>
+    <span class="mobile-spec-text" id="mobileSpecText">-</span>
+  </div>
+  <button class="btn btn-primary" id="mobileDownloadBtn">🖼️ ดาวน์โหลดรูป</button>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
