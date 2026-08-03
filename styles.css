@@ -1,0 +1,7 @@
+﻿/* Aggregated stylesheet loader */
+/* Desktop/shared styles */
+@import url("./desktop.css");
+
+/* Phone styles */
+@import url("./mobile.css");
+
