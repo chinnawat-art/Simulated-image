@@ -1,0 +1,3495 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Product & SKU Manager - CGA-Alutech Door Visualizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=Noto+Serif+Thai:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="appearance.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0F1117;
+    --bg2: #161B26;
+    --bg3: #1E2534;
+    --border: #2A3347;
+    --border2: #374156;
+    --gold: #C5A059;
+    --gold-dim: #8C6D37;
+    --gold-glow: rgba(197,160,89,0.15);
+    --text: #E8E3DA;
+    --text2: #9BA3B4;
+    --text3: #636D82;
+    --green: #34D399;
+    --green-bg: rgba(52,211,153,0.1);
+    --red: #F87171;
+    --red-bg: rgba(248,113,113,0.1);
+    --blue: #60A5FA;
+    --blue-bg: rgba(96,165,250,0.1);
+    --amber: #FBBF24;
+    --amber-bg: rgba(251,191,36,0.1);
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+  /* Header */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,17,23,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .header-brand { display: flex; align-items: center; gap: 10px; }
+  .brand-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .brand-title { font-size: 16px; font-weight: 700; color: var(--gold); }
+  .brand-sub { font-size: 11px; color: var(--text3); }
+  .header-sep { flex: 1; }
+  .header-badge {
+    background: var(--gold-glow);
+    border: 1px solid var(--gold-dim);
+    color: var(--gold);
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 99px; letter-spacing: 0.05em;
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px; background: var(--bg3);
+    border: 1px solid var(--border); color: var(--text2);
+    border-radius: var(--radius-sm); font-size: 13px;
+    cursor: pointer; text-decoration: none; transition: all 0.2s;
+  }
+  .back-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .header-user {
+    display: none; align-items: center; gap: 10px;
+    padding: 7px 12px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text2); font-size: 12px;
+  }
+  .header-user.open { display: inline-flex; }
+  .header-user-email { color: var(--text); font-weight: 600; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Auth Gate */
+  .auth-screen {
+    position: fixed; inset: 0; z-index: 1200;
+    display: none; align-items: center; justify-content: center;
+    padding: 24px; background:
+      radial-gradient(circle at top, rgba(197,160,89,0.12), transparent 34%),
+      rgba(15,17,23,0.96);
+    backdrop-filter: blur(14px);
+  }
+  .auth-screen.open { display: flex; }
+  .auth-card {
+    width: 100%; max-width: 430px;
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 18px; box-shadow: var(--shadow);
+    padding: 28px;
+  }
+  .auth-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .auth-card-icon {
+    width: 46px; height: 46px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+    font-size: 22px;
+  }
+  .auth-card-title { font-size: 20px; font-weight: 700; color: var(--text); }
+  .auth-card-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .auth-help {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+    color: var(--text2); font-size: 12px; line-height: 1.6; margin-bottom: 18px;
+  }
+  .auth-error {
+    display: none; margin-bottom: 14px; padding: 10px 12px;
+    border-radius: var(--radius-sm); border: 1px solid var(--red);
+    background: var(--red-bg); color: var(--red); font-size: 12px;
+  }
+  .auth-error.open { display: block; }
+  .auth-actions { display: flex; gap: 10px; margin-top: 8px; }
+  .auth-actions .btn { flex: 1; justify-content: center; }
+  .manager-shell { display: none; }
+  .manager-shell.open { display: block; }
+
+  /* Main Navigation Tabs */
+  .master-nav {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    display: flex; gap: 4px; overflow-x: auto;
+  }
+  .nav-tab {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 18px;
+    background: transparent; border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text2); font-family: inherit; font-size: 13.5px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+  .nav-tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+    background: var(--gold-glow);
+  }
+  .nav-tab-badge {
+    background: var(--bg3); border: 1px solid var(--border2);
+    font-size: 11px; font-weight: 700; color: var(--text3);
+    padding: 1px 7px; border-radius: 99px;
+  }
+  .nav-tab.active .nav-tab-badge { background: var(--gold-dim); color: #FFF; border-color: var(--gold); }
+
+  .main { max-width: 1400px; margin: 0 auto; padding: 24px 28px 60px; }
+
+  /* Tab View Sections */
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; animation: fadeIn 0.2s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Stats */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px;
+  }
+  .stat-label { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .stat-value { font-size: 26px; font-weight: 700; color: var(--text); font-family: 'IBM Plex Mono', monospace; }
+  .stat-value.gold { color: var(--gold); }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .search-box {
+    flex: 1; min-width: 220px;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px 14px; transition: border-color 0.2s;
+  }
+  .search-box:focus-within { border-color: var(--gold-dim); }
+  .search-box svg { color: var(--text3); flex-shrink: 0; }
+  .search-box input {
+    background: transparent; border: none; outline: none;
+    color: var(--text); font-family: inherit; font-size: 13px; width: 100%;
+  }
+  .search-box input::placeholder { color: var(--text3); }
+  .filter-select {
+    background: var(--bg2); border: 1px solid var(--border);
+    color: var(--text); font-family: inherit; font-size: 13px;
+    padding: 8px 12px; border-radius: var(--radius-sm);
+    cursor: pointer; outline: none; transition: border-color 0.2s; min-width: 120px;
+  }
+  .filter-select:focus { border-color: var(--gold-dim); }
+  .filter-select option { background: var(--bg2); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.2s; white-space: nowrap;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dim)); color: #0F1117;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(197,160,89,0.3); }
+  .btn-ghost { background: var(--bg2); border: 1px solid var(--border); color: var(--text2); }
+  .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+  .btn-danger { background: var(--red-bg); border: 1px solid var(--red); color: var(--red); }
+  .btn-danger:hover { background: var(--red); color: #0F1117; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* SQL Note */
+  .sql-note {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-left: 3px solid var(--amber); border-radius: var(--radius);
+    padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 12px;
+  }
+  .sql-note-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .sql-note-title { font-size: 13px; font-weight: 700; color: var(--amber); margin-bottom: 6px; }
+  .sql-note-text { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .sql-code {
+    display: block; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px 14px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--green);
+    white-space: pre; overflow-x: auto; margin-top: 10px;
+  }
+  .sql-toggle { cursor: pointer; color: var(--gold); font-size: 12px; text-decoration: underline; }
+  .sql-detail { display: none; }
+  .sql-detail.open { display: block; }
+
+  /* Table */
+  .table-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .table-header-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+  }
+  .table-title { font-size: 14px; font-weight: 700; color: var(--text); }
+  .table-count { font-size: 12px; color: var(--text3); margin-left: 8px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--bg); padding: 10px 16px; text-align: left;
+    font-size: 11px; font-weight: 700; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.025); }
+  tbody td { padding: 12px 16px; font-size: 13px; color: var(--text2); vertical-align: middle; }
+
+  .thumb-img {
+    width: 44px; height: 44px; object-fit: contain;
+    background: #000; border: 1px solid var(--border2); border-radius: 6px;
+    padding: 2px;
+  }
+  .sku-code {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600;
+    color: var(--gold); background: var(--gold-glow);
+    border: 1px solid rgba(197,160,89,0.25); padding: 3px 8px; border-radius: 4px;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .sku-code:hover { background: rgba(197,160,89,0.25); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; white-space: nowrap;
+  }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-blue { background: var(--blue-bg); color: var(--blue); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+  .actions-cell { display: flex; gap: 6px; align-items: center; }
+  .empty-state { text-align: center; padding: 56px 24px; color: var(--text3); }
+  .empty-state-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state-title { font-size: 15px; font-weight: 700; color: var(--text2); margin-bottom: 6px; }
+  .loading-row td { text-align: center; padding: 40px; color: var(--text3); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px); z-index: 1000; display: none;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 14px; width: 100%; max-width: 580px; max-height: 90vh;
+    overflow-y: auto; box-shadow: var(--shadow); animation: modalIn 0.2s ease-out;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(-16px) scale(0.97); }
+    to { opacity: 1; transform: none; }
+  }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 24px; border-bottom: 1px solid var(--border);
+  }
+  .modal-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .modal-close {
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    cursor: pointer; color: var(--text3); font-size: 16px; transition: all 0.2s;
+  }
+  .modal-close:hover { border-color: var(--red); color: var(--red); }
+  .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+  .modal-footer {
+    display: flex; gap: 10px; justify-content: flex-end;
+    padding: 16px 24px; border-top: 1px solid var(--border);
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 12px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+  .form-input, .form-select, .form-textarea {
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); font-family: inherit; font-size: 13px;
+    padding: 9px 12px; border-radius: var(--radius-sm); outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--gold-dim); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .sort-input {
+    width: 64px;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--gold);
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    text-align: center;
+    padding: 5px 6px;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .sort-input:focus {
+    border-color: var(--gold);
+    background: var(--bg3);
+    box-shadow: 0 0 0 2px var(--gold-glow);
+  }
+
+  /* File Upload Zone */
+  .upload-zone {
+    border: 2px dashed var(--border2); border-radius: var(--radius);
+    padding: 16px; text-align: center; background: var(--bg);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .upload-zone:hover { border-color: var(--gold-dim); background: var(--gold-glow); }
+  .upload-icon { font-size: 24px; margin-bottom: 4px; }
+  .upload-text { font-size: 12px; color: var(--text2); }
+  .upload-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .preview-img-box {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg); border: 1px solid var(--border);
+    padding: 8px 12px; border-radius: var(--radius-sm); margin-top: 6px;
+  }
+  .preview-img-box img { width: 50px; height: 50px; object-fit: contain; background: #000; border-radius: 4px; }
+
+  /* Toast & Confirm */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg2); border: 1px solid var(--border2);
+    color: var(--text); font-size: 13px; font-weight: 500;
+    padding: 12px 16px; border-radius: var(--radius); box-shadow: var(--shadow);
+    animation: toastIn 0.25s ease-out; max-width: 340px;
+  }
+  .toast.success { border-color: var(--green); }
+  .toast.error   { border-color: var(--red); }
+  .toast.amber, .toast.warning, .toast.info { border-color: var(--amber); }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+
+  .confirm-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 2000; display: none; align-items: center; justify-content: center;
+  }
+  .confirm-overlay.open { display: flex; }
+  .confirm-box {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 14px; padding: 28px; max-width: 400px; width: 100%;
+    box-shadow: var(--shadow); text-align: center; animation: modalIn 0.2s ease-out;
+  }
+  .confirm-icon { font-size: 36px; margin-bottom: 12px; }
+  .confirm-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .confirm-msg { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
+  .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+
+  @media (max-width: 900px) {
+    .stats-row { grid-template-columns: repeat(2,1fr); }
+    .form-row { grid-template-columns: 1fr; }
+    .header, .master-nav, .main { padding-left: 16px; padding-right: 16px; }
+  }
+
+  /* Admin workspace polish: keep the existing data surface, improve hierarchy. */
+  :root {
+    --bg: #0b0e13;
+    --bg2: #121720;
+    --bg3: #1a2230;
+    --border: #273142;
+    --border2: #3a465b;
+    --gold: #d7ad62;
+    --gold-dim: #9b7439;
+    --gold-glow: rgba(215,173,98,0.12);
+    --text: #f1eee8;
+    --text2: #aab3c2;
+    --text3: #6f7b8e;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 18px 50px rgba(0,0,0,0.32);
+  }
+
+  body {
+    background:
+      radial-gradient(900px 500px at 85% -10%, rgba(215,173,98,0.08), transparent 68%),
+      linear-gradient(180deg, #0b0e13 0%, #10151e 100%);
+  }
+
+  .header {
+    padding: 13px clamp(16px, 4vw, 52px);
+    background: rgba(11,14,19,0.86);
+    border-bottom-color: rgba(215,173,98,0.2);
+  }
+
+  .brand-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    box-shadow: 0 8px 22px rgba(215,173,98,0.16);
+  }
+
+  .brand-title { color: var(--text); letter-spacing: 0.01em; }
+  .brand-sub { color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; }
+  .header-badge { padding: 5px 11px; color: var(--gold); border-color: rgba(215,173,98,0.35); }
+  .back-btn { background: transparent; }
+
+  .master-nav {
+    padding: 0 clamp(16px, 4vw, 52px);
+    background: rgba(18,23,32,0.92);
+    scrollbar-width: none;
+  }
+  .master-nav::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    position: relative;
+    padding: 15px 16px 13px;
+    color: var(--text3);
+    font-size: 13px;
+  }
+  .nav-tab::after {
+    content: '';
+    position: absolute;
+    right: 16px;
+    bottom: -1px;
+    left: 16px;
+    height: 2px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
+  }
+  .nav-tab.active::after { transform: scaleX(1); }
+  .nav-tab.active { background: linear-gradient(180deg, rgba(215,173,98,0.11), transparent); }
+  .nav-tab-badge { min-width: 22px; text-align: center; }
+
+  .main { width: 100%; max-width: 1480px; min-width: 0; padding: 30px clamp(16px, 4vw, 52px) 70px; }
+  .stats-row { gap: 12px; margin-bottom: 24px; }
+  .stat-card {
+    position: relative;
+    overflow: hidden;
+    padding: 18px 20px;
+    background: linear-gradient(145deg, rgba(26,34,48,0.94), rgba(18,23,32,0.94));
+    border-color: rgba(58,70,91,0.82);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 2px;
+    background: var(--gold);
+    opacity: 0.7;
+  }
+  .stat-label { color: var(--text3); letter-spacing: 0.08em; }
+  .stat-value { font-size: 28px; }
+
+  .toolbar {
+    padding: 12px;
+    margin-bottom: 14px;
+    background: rgba(18,23,32,0.72);
+    border: 1px solid rgba(39,49,66,0.9);
+    border-radius: var(--radius);
+  }
+  .search-box { background: var(--bg3); border-color: var(--border); min-height: 40px; }
+  .search-box:focus-within { border-color: var(--gold-dim); box-shadow: 0 0 0 3px var(--gold-glow); }
+  .btn { min-height: 38px; border-radius: 9px; }
+  .btn-primary { background: linear-gradient(135deg, #d7ad62, #916b35); color: #111318; box-shadow: 0 6px 18px rgba(215,173,98,0.18); }
+  .btn-ghost { background: var(--bg3); border-color: var(--border2); }
+  .btn-danger { background: rgba(248,113,113,0.08); }
+
+  .table-card {
+    background: rgba(18,23,32,0.9);
+    border-color: rgba(58,70,91,0.78);
+    box-shadow: 0 14px 34px rgba(0,0,0,0.18);
+  }
+  .table-header-row { padding: 17px 20px; background: rgba(26,34,48,0.5); }
+  thead th { background: #0e131b; color: #7f8a9d; padding-top: 12px; padding-bottom: 12px; }
+  tbody tr { border-bottom-color: rgba(39,49,66,0.72); }
+  tbody tr:hover { background: rgba(215,173,98,0.045); }
+  tbody td { padding-top: 13px; padding-bottom: 13px; }
+  .thumb-img { border-color: var(--border2); background: #090b0f; }
+
+  .sql-note { background: rgba(25,25,23,0.72); border-left-color: var(--gold); }
+  .appearance-card, .export-preview-wrap { background: rgba(11,14,19,0.62); }
+  .appearance-card:hover { border-color: rgba(215,173,98,0.42); }
+  .export-pane-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .export-pane-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .export-pane-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .export-pane-desc {
+    font-size: 12px;
+    color: var(--text2);
+    max-width: 760px;
+  }
+  .export-pane-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 18px;
+    align-items: start;
+  }
+  .export-pane-grid > *,
+  .export-side-stack,
+  .export-config-card,
+  .export-preview-wrap {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .export-side-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .export-config-card {
+    border: 1px solid rgba(58,70,91,0.9);
+    border-radius: 16px;
+    padding: 16px;
+    background: linear-gradient(180deg, rgba(16,20,28,0.9), rgba(13,17,24,0.88));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+  .export-config-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .export-preview-wrap {
+    border: 1px solid rgba(58,70,91,0.9) !important;
+    border-radius: 16px !important;
+    padding: 16px !important;
+    margin-top: 0 !important;
+    background: linear-gradient(180deg, rgba(16,20,28,0.96), rgba(11,14,19,0.92)) !important;
+  }
+  .export-preview-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .export-preview-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .export-preview-meta {
+    font-size: 11px;
+    color: var(--text2);
+  }
+  .export-color-field {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .export-color-field input[type="color"] {
+    width: 42px;
+    min-width: 42px;
+    height: 36px;
+    padding: 3px;
+    border-radius: 10px;
+    border: 1px solid var(--border2);
+    background: var(--bg3);
+  }
+  .export-color-field .form-input {
+    flex: 1;
+  }
+  .export-hint-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .export-hint-chip {
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(58,70,91,0.85);
+    background: rgba(18,23,32,0.72);
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.45;
+  }
+  .export-hint-chip strong {
+    color: var(--text);
+  }
+  @media (max-width: 1100px) {
+    .export-pane-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .modal { border-color: rgba(215,173,98,0.28); box-shadow: 0 24px 80px rgba(0,0,0,0.5); }
+
+  @media (max-width: 640px) {
+    .header { gap: 10px; padding: 10px 12px; }
+    .brand-icon { width: 34px; height: 34px; font-size: 16px; }
+    .brand-title { font-size: 14px; }
+    .brand-sub, .header-badge, .header-user { display: none !important; }
+    .back-btn { padding: 7px 9px; font-size: 0; }
+    .back-btn svg { width: 17px; height: 17px; }
+    .master-nav { padding: 0 10px; }
+    .nav-tab { padding: 12px 10px 11px; font-size: 11px; gap: 5px; }
+    .nav-tab::after { right: 10px; left: 10px; }
+    .main { padding: 18px 10px 40px; }
+    .stats-row { gap: 8px; margin-bottom: 14px; }
+    .stat-card { padding: 12px; }
+    .stat-label { font-size: 9px; }
+    .stat-value { font-size: 22px; }
+    .toolbar { padding: 8px; gap: 7px; }
+    .toolbar .search-box { min-width: 100%; }
+    .toolbar .btn { flex: 1; justify-content: center; padding: 8px 9px; font-size: 11px; }
+    .table-card { border-radius: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-brand">
+    <div class="brand-icon">🗂️</div>
+    <div>
+      <div class="brand-title">CGA-Alutech</div>
+      <div class="brand-sub">Door Visualizer Pro</div>
+    </div>
+  </div>
+  <div class="header-sep"></div>
+  <span class="header-badge">หน้าจัดการระบบ</span>
+  <div class="header-user" id="headerUserBox">
+    <span>ผู้ใช้:</span>
+    <span class="header-user-email" id="headerUserEmail">-</span>
+  </div>
+  <button class="btn btn-ghost" id="logoutBtn" onclick="handleLogout()" style="display:none">ออกจากระบบ</button>
+  <a href="index.html" class="back-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+    กลับหน้าหลัก
+  </a>
+</header>
+
+<section class="auth-screen open" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-card-head">
+      <div class="auth-card-icon">🔐</div>
+      <div>
+        <div class="auth-card-title">เข้าสู่ระบบก่อนใช้งาน</div>
+        <div class="auth-card-sub">หน้า `sku-manager.html` จะเปิดใช้งานได้เมื่อผ่าน Supabase Auth แล้วเท่านั้น</div>
+      </div>
+    </div>
+    <div class="auth-help">
+      ใช้อีเมลและรหัสผ่านของผู้ใช้ที่สร้างไว้ใน Supabase Authentication
+    </div>
+    <div class="auth-error" id="authErrorBox"></div>
+    <form id="loginForm">
+      <div class="form-group">
+        <label>อีเมล</label>
+        <input type="email" class="form-input" id="loginEmailInput" placeholder="name@example.com" autocomplete="username" required>
+      </div>
+      <div class="form-group">
+        <label>รหัสผ่าน</label>
+        <input type="password" class="form-input" id="loginPasswordInput" placeholder="กรอกรหัสผ่าน" autocomplete="current-password" required>
+      </div>
+      <div class="auth-actions">
+        <button type="submit" class="btn btn-primary" id="loginSubmitBtn">เข้าสู่ระบบ</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<div class="manager-shell" id="managerShell">
+<!-- Master Navigation Tabs -->
+<nav class="master-nav">
+  <button class="nav-tab active" onclick="switchMasterTab('scenes')">
+    ฉากห้อง <span class="nav-tab-badge" id="tabBadgeScenes">0</span>
+  </button>
+  <button class="nav-tab" onclick="switchMasterTab('doors')">
+    บานประตู <span class="nav-tab-badge" id="tabBadgeDoors">0</span>
+  </button>
+  <button class="nav-tab" onclick="switchMasterTab('handles')">
+    มือจับประตู <span class="nav-tab-badge" id="tabBadgeHandles">0</span>
+  </button>
+  <button class="nav-tab" onclick="switchMasterTab('sizes')">
+    ขนาดประตู <span class="nav-tab-badge" id="tabBadgeSizes">0</span>
+  </button>
+  <button class="nav-tab" onclick="switchMasterTab('appearance')">
+    รูปลักษณ์
+  </button>
+  <button class="nav-tab" onclick="switchMasterTab('export')">
+    ไฟล์ดาวโหลด
+  </button>
+</nav>
+
+<div class="main">
+
+  <!-- SQL Setup Banner -->
+  <div class="sql-note" id="sqlNote">
+    <div class="sql-note-icon">📌</div>
+    <div style="flex:1">
+      <div class="sql-note-title">ตรวจสอบโครงสร้างฐานข้อมูลให้ตรงกับหน้าใช้งานจริง</div>
+      <div class="sql-note-text">หน้า `index.html` ปัจจุบันใช้ระบบ 4 Panel, ข้อมูลฉากแบบอิงสเกลจริง, มือจับ และขนาดประตูจาก Supabase โดยตรง หากตารางยังไม่พร้อม ให้ใช้ SQL ด้านล่างเป็นมาตรฐานล่าสุด</div>
+      <span class="sql-toggle" onclick="toggleSql()">ดู SQL Schema สำหรับติดตั้งครั้งแรก</span>
+      <div class="sql-detail" id="sqlDetail">
+        <code class="sql-code">-- ใช้คำสั่งด้านล่างเพื่อเตรียมตารางใน Supabase ให้พร้อม
+-- สามารถรันในหน้า Migration หรือ Supabase -> SQL Editor ได้:
+ALTER TABLE public.room_scenes ADD COLUMN IF NOT EXISTS sort_order integer DEFAULT 0;
+ALTER TABLE public.door_products ADD COLUMN IF NOT EXISTS sort_order integer DEFAULT 0;
+ALTER TABLE public.handle_products ADD COLUMN IF NOT EXISTS sort_order integer DEFAULT 0;
+ALTER TABLE public.door_products ADD COLUMN IF NOT EXISTS handle_x_frac numeric(6,4);
+ALTER TABLE public.door_products ADD COLUMN IF NOT EXISTS handle_y_frac numeric(6,4);
+ALTER TABLE public.door_products ADD COLUMN IF NOT EXISTS handle_scale numeric(6,4);
+ALTER TABLE public.handle_products ADD COLUMN IF NOT EXISTS handle_x_frac numeric(6,4);
+ALTER TABLE public.handle_products ADD COLUMN IF NOT EXISTS handle_y_frac numeric(6,4);
+ALTER TABLE public.handle_products ADD COLUMN IF NOT EXISTS handle_scale numeric(6,4);
+ALTER TABLE public.room_scenes ADD COLUMN IF NOT EXISTS floor_frac numeric(6,4) DEFAULT 0.952;
+ALTER TABLE public.room_scenes ADD COLUMN IF NOT EXISTS wall_top_frac numeric(6,4) DEFAULT 0.093;
+ALTER TABLE public.room_scenes ADD COLUMN IF NOT EXISTS room_width_cm integer DEFAULT 300;
+ALTER TABLE public.room_scenes ADD COLUMN IF NOT EXISTS room_height_cm integer DEFAULT 300;
+ALTER TABLE public.door_skus ADD COLUMN IF NOT EXISTS panel_signature text;
+ALTER TABLE public.door_skus ADD COLUMN IF NOT EXISTS panel1_door_key text;
+ALTER TABLE public.door_skus ADD COLUMN IF NOT EXISTS panel2_door_key text;
+ALTER TABLE public.door_skus ADD COLUMN IF NOT EXISTS panel3_door_key text;
+ALTER TABLE public.door_skus ADD COLUMN IF NOT EXISTS panel4_door_key text;
+
+-- 1. ตาราง SKU
+create table if not exists public.door_skus (
+  id uuid not null default gen_random_uuid(),
+  sku_code text not null unique,
+  panel_signature text,
+  panel1_door_key text,
+  panel2_door_key text,
+  panel3_door_key text,
+  panel4_door_key text,
+  width_cm integer not null, height_cm integer not null,
+   handle_key text, handle_name text, notes text,
+  is_active boolean not null default true, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+  constraint door_skus_pkey primary key (id)
+);
+
+-- 2. ตารางฉากห้อง
+create table if not exists public.room_scenes (
+  id uuid not null default gen_random_uuid(),
+  scene_key text not null unique, name text not null, image_path text not null,
+  sort_order integer not null default 0,
+  width integer not null default 364, height integer not null default 405,
+  floor_frac numeric(6,4) not null default 0.952,
+  wall_top_frac numeric(6,4) not null default 0.093,
+  room_width_cm integer not null default 300,
+  room_height_cm integer not null default 300,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+  constraint room_scenes_pkey primary key (id)
+);
+
+-- 3. ตารางบานประตู
+create table if not exists public.door_products (
+  id uuid not null default gen_random_uuid(),
+  door_key text not null unique, name text not null, image_path text not null,
+  sort_order integer not null default 0,
+  canvas_w integer not null default 299, canvas_h integer not null default 509,
+  bottom_frac numeric(6,4) not null default 0.9862,
+  handle_x_frac numeric(6,4), handle_y_frac numeric(6,4), handle_scale numeric(6,4),
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+  constraint door_products_pkey primary key (id)
+);
+
+-- 4. ตารางมือจับประตู
+create table if not exists public.handle_products (
+  id uuid not null default gen_random_uuid(),
+  handle_key text not null unique, name text not null, image_path text not null,
+  sort_order integer not null default 0,
+  handle_x_frac numeric(6,4), handle_y_frac numeric(6,4), handle_scale numeric(6,4),
+  is_active boolean not null default true, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+  constraint handle_products_pkey primary key (id)
+);
+
+-- 5. ตารางขนาดประตู
+create table if not exists public.door_sizes (
+  id uuid not null default gen_random_uuid(),
+  size_key text not null unique, label text not null,
+  width_cm integer not null, height_cm integer not null,
+  is_active boolean not null default true, created_at timestamptz not null default now(),
+  constraint door_sizes_pkey primary key (id)
+);
+
+-- RLS Policies
+alter table public.door_skus enable row level security;
+alter table public.room_scenes enable row level security;
+alter table public.door_products enable row level security;
+alter table public.handle_products enable row level security;
+alter table public.door_sizes enable row level security;
+
+create policy "Allow all skus" on public.door_skus for all using (true) with check (true);
+create policy "Allow all scenes" on public.room_scenes for all using (true) with check (true);
+create policy "Allow all doors" on public.door_products for all using (true) with check (true);
+create policy "Allow all handles" on public.handle_products for all using (true) with check (true);
+create policy "Allow all sizes" on public.door_sizes for all using (true) with check (true);</code>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sqlNote').style.display='none'">ปิด</button>
+  </div>
+
+  <!-- -- TAB 1: SKUS ---------------------------------------- -->
+  <div class="tab-pane" id="pane-skus">
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">SKU 4 Panel ทั้งหมด</div>
+        <div class="stat-value gold" id="skuStatTotal">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">ที่เปิดใช้งาน</div>
+        <div class="stat-value green" id="skuStatActive">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">ที่ปิดใช้งาน</div>
+        <div class="stat-value red" id="skuStatInactive">0</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="skuSearchInput" placeholder="ค้นหา SKU, รูปแบบ Panel, มือจับ..." oninput="filterSkus()">
+      </div>
+      <button class="btn btn-ghost" onclick="exportSkuCSV()">ส่งออก CSV</button>
+      <button class="btn btn-ghost" onclick="loadSkus()">รีเฟรช</button>
+      <button class="btn btn-primary" onclick="openSkuModal()">เพิ่ม SKU ใหม่</button>
+    </div>
+
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>รหัส SKU</th><th>รูปแบบ Panel</th><th>รายการบานที่เลือก</th><th>ขนาด (ซม.)</th><th>มือจับ</th><th>สถานะ</th><th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="skuTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- TAB 2: SCENES -------------------------------------- -->
+  <div class="tab-pane active" id="pane-scenes">
+    <div class="toolbar">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="sceneSearchInput" placeholder="ค้นหาฉากห้อง..." oninput="filterScenes()">
+      </div>
+      <button class="btn btn-ghost" onclick="loadScenes()">รีเฟรช</button>
+      <button class="btn btn-primary" onclick="openSceneModal()">เพิ่มฉากห้อง</button>
+    </div>
+
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:80px;text-align:center">ลำดับ</th><th>รูปภาพ</th><th>Key</th><th>ชื่อฉากห้อง</th><th>ขนาดภาพ (W x H)</th><th>เส้นผนัง/พื้น</th><th>ขนาดห้องจริง</th><th>สถานะ</th><th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="sceneTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- TAB 3: DOORS --------------------------------------- -->
+  <div class="tab-pane" id="pane-doors">
+    <div class="toolbar">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="doorSearchInput" placeholder="ค้นหาบานประตู..." oninput="filterDoors()">
+      </div>
+      <button class="btn btn-ghost" onclick="loadDoors()">รีเฟรช</button>
+      <button class="btn btn-primary" onclick="openDoorModal()">เพิ่มบานประตู</button>
+    </div>
+
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:80px;text-align:center">ลำดับ</th><th>รูปภาพ</th><th>คีย์</th><th>ชื่อบานประตู</th><th>ขนาดพื้นที่ภาพ (กว้าง x สูง)</th><th>สถานะ</th><th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="doorTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- TAB 4: HANDLES ------------------------------------- -->
+  <div class="tab-pane" id="pane-handles">
+    <div class="toolbar">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="handleSearchInput" placeholder="ค้นหามือจับ..." oninput="filterHandles()">
+      </div>
+      <button class="btn btn-ghost" onclick="loadHandles()">รีเฟรช</button>
+      <button class="btn btn-primary" onclick="openHandleModal()">เพิ่มมือจับ</button>
+    </div>
+
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:80px;text-align:center">ลำดับ</th><th>รูปภาพ</th><th>คีย์</th><th>ชื่อมือจับ</th><th>สถานะ</th><th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="handleTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- TAB 5: SIZES --------------------------------------- -->
+  <div class="tab-pane" id="pane-sizes">
+    <div class="toolbar">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="sizeSearchInput" placeholder="ค้นหาขนาดประตู..." oninput="filterSizes()">
+      </div>
+      <button class="btn btn-ghost" onclick="loadSizes()">รีเฟรช</button>
+      <button class="btn btn-primary" onclick="openSizeModal()">เพิ่มขนาดประตู</button>
+    </div>
+
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>คีย์</th><th>ชื่อขนาด</th><th>กว้าง (ซม.)</th><th>สูง (ซม.)</th><th>สถานะ</th><th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="sizeTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- TAB 6: APPEARANCE ---------------------------------- -->
+  <div class="tab-pane" id="pane-appearance">
+    <!-- Logo Settings Card -->
+    <div class="panel" style="padding: 20px 22px; border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; margin-bottom: 20px;">
+      <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 14px;">
+        <div>
+          <div class="section-title" style="font-size: 16px; font-weight: 700; color: var(--gold); margin-bottom: 4px;">🏷️ โลโก้เว็บไซต์ (Website Logo)</div>
+          <div class="section-desc" style="font-size: 12px; color: var(--text2);">อัปโหลดโลโก้ไปยัง Supabase Storage แล้วบันทึก URL ลงตาราง site_settings เพื่อแสดงที่แถบหัวเว็บทันที</div>
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom: 14px;">
+        <div class="form-group">
+          <label style="font-size: 12px; font-weight: 600; color: var(--text);">URL โลโก้ปัจจุบัน</label>
+          <input type="text" class="form-input" id="websiteLogoUrlInput" placeholder="https://.../website-logo.png">
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom: 16px;">
+        <div class="form-group">
+          <label style="font-size: 12px; font-weight: 600; color: var(--text);">อัปโหลดไฟล์โลโก้ใหม่</label>
+          <input type="file" class="form-input" id="websiteLogoFileInput" accept="image/*">
+          <div class="preview-img-box" id="websiteLogoPreviewBox" style="display:none; margin-top: 10px; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; width: fit-content;">
+            <img id="websiteLogoPreviewImg" src="" alt="Logo Preview" style="max-height: 50px; max-width: 220px; object-fit: contain;">
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="saveWebsiteLogoBtn" type="button">บันทึกโลโก้</button>
+        <button class="btn btn-ghost" id="reloadWebsiteLogoBtn" type="button">โหลดจากฐานข้อมูล</button>
+        <button class="btn btn-danger" id="clearWebsiteLogoBtn" type="button">ล้างค่าเก่า</button>
+      </div>
+    </div>
+
+    <div class="panel" style="padding: 20px 22px; border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; margin-bottom: 20px;">
+      <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 14px;">
+        <div>
+          <div class="section-title" style="font-size: 16px; font-weight: 700; color: var(--gold); margin-bottom: 4px;">🎨 ตกแต่งหน้า Visualizer</div>
+          <div class="section-desc" style="font-size: 12px; color: var(--text2);">เลือกจุดบนหน้า `index.html` แล้วกำหนดสีพื้นหลัง สีตัวอักษร สีขอบ และฟอนต์ได้ทีละส่วน พร้อมดูตัวอย่างก่อนบันทึก</div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-ghost" type="button" onclick="loadAppearanceSettings()">โหลดค่าปัจจุบัน</button>
+          <button class="btn btn-ghost" type="button" onclick="applyAppearancePreset('warm')">ใช้โทนอุ่น</button>
+          <button class="btn btn-ghost" type="button" onclick="applyAppearancePreset('clean')">ใช้โทนสะอาด</button>
+          <button class="btn btn-ghost" type="button" onclick="resetAppearanceForm()">คืนค่าเดิม</button>
+          <a class="btn btn-ghost" href="index.html" target="_blank" rel="noopener">เปิดหน้าใช้งานจริง</a>
+          <button class="btn btn-primary" type="button" onclick="saveAppearanceSettings()">บันทึกการตั้งค่ารูปลักษณ์</button>
+        </div>
+      </div>
+      <div class="appearance-live-preview">
+        <div class="appearance-live-preview-head">
+          <div class="appearance-live-preview-title">ดูหน้าใช้งานจริง<small>คลิกส่วนที่ต้องการแก้ในกรอบนี้ได้เลย</small></div>
+          <div class="appearance-live-preview-status" id="appearancePreviewStatus">กำลังโหลดหน้า index.html...</div>
+        </div>
+        <iframe class="appearance-live-preview-frame" id="appearanceLivePreview" src="index.html?preview=desktop" title="ตัวอย่างหน้า Door Visualizer จริง"></iframe>
+        <div class="appearance-inline-editor" id="appearanceInlineEditor">
+          <div class="appearance-inline-editor-head">
+            <div class="appearance-inline-editor-title" id="appearanceInlineEditorTitle">กำลังแก้ไข</div>
+            <button class="appearance-inline-editor-close" type="button" onclick="closeAppearanceInlineEditor()" title="ปิดแผงแก้ไข">&times;</button>
+          </div>
+          <div class="appearance-inline-editor-grid">
+            <label class="appearance-inline-field appearance-inline-background">พื้นหลัง<input type="color" id="inlineAppearanceBackground" oninput="updateAppearanceInlineEditor('background', this.value)"></label>
+            <label class="appearance-inline-field appearance-inline-text">ข้อความ<input type="color" id="inlineAppearanceText" oninput="updateAppearanceInlineEditor('text', this.value)"></label>
+            <label class="appearance-inline-field appearance-inline-line">ขอบ<input type="color" id="inlineAppearanceLine" oninput="updateAppearanceInlineEditor('line', this.value)"></label>
+            <label class="appearance-inline-field appearance-inline-button">ปุ่ม<input type="color" id="inlineAppearanceButton" oninput="updateAppearanceInlineEditor('button', this.value)"></label>
+          </div>
+          <label class="appearance-inline-field appearance-inline-font" id="inlineAppearanceFontField">ฟอนต์<select id="inlineAppearanceFont" onchange="updateAppearanceInlineEditor('font', this.value)" aria-label="ฟอนต์ของส่วนที่เลือก"></select></label>
+        </div>
+      </div>
+      <div id="appearanceSettingsList"></div>
+    </div>
+
+  </div>
+
+  <div class="tab-pane" id="pane-export">
+    <div class="panel" style="padding: 20px 22px; border: 1px solid var(--border); background: var(--bg2); border-radius: 12px; margin-bottom: 20px;">
+      <div class="export-pane-shell">
+      <div class="export-pane-header">
+        <div>
+          <div class="export-pane-title">🖼️ รูปแบบไฟล์ดาวโหลด</div>
+          <div class="export-pane-desc">ส่วนนี้ใช้กำหนดหน้าตาของรูปภาพที่ออกจากปุ่ม <code>ดาวน์โหลดรูปจำลอง</code> เช่น ขนาดภาพ พื้นหลัง กล่องสรุป สีข้อความ และฟอนต์</div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-ghost" type="button" onclick="loadExportAppearanceSettings()">โหลดค่าปัจจุบัน</button>
+          <button class="btn btn-primary" type="button" onclick="saveExportAppearanceSettings()">บันทึกรูปแบบไฟล์ดาวโหลด</button>
+        </div>
+      </div>
+
+      <div class="export-hint-row">
+        <div class="export-hint-chip"><strong>พื้นหลังภาพ</strong>คือพื้นรอบนอกสุดของไฟล์ที่ดาวโหลด</div>
+        <div class="export-hint-chip"><strong>กรอบหลัก</strong>คือกรอบใหญ่ที่ครอบภาพและกล่องสรุปด้านขวา</div>
+        <div class="export-hint-chip"><strong>กล่องสรุป</strong>คือคอลัมน์ขวาที่มีหัวข้อและค่ารายการอุปกรณ์</div>
+        <div class="export-hint-chip"><strong>การ์ดข้อมูล</strong>คือกล่องย่อยแต่ละใบ เช่น แบรนด์สินค้า / ฉากห้อง / รหัส SKU</div>
+      </div>
+
+      <div class="export-pane-grid">
+        <div class="export-preview-wrap">
+          <div class="export-preview-head">
+            <div class="export-preview-title">ตัวอย่างไฟล์ดาวโหลด</div>
+            <div id="exportPreviewMeta" class="export-preview-meta">1200 x 760 px · ตัวอย่างสัดส่วนตามไฟล์จริง</div>
+          </div>
+          <div class="form-help" style="margin-bottom:10px;">พรีวิวส่วนนี้ย่อให้พอดีกล่อง แต่คงสัดส่วนเดียวกับไฟล์ดาวโหลดจริง เพื่อใช้เทียบ layout และพื้นที่จริงของแต่ละส่วน</div>
+          <div id="exportPreviewStage" style="width:100%; border:1px solid #2A3140; border-radius:18px; background:#10141B; aspect-ratio:1200 / 760; position:relative; overflow:hidden; box-sizing:border-box;">
+            <img id="exportPreviewRenderedImage" src="" alt="Export Preview" style="display:none; width:100%; height:100%; object-fit:contain; object-position:center;">
+            <div id="exportPreviewImagePlaceholder" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#8F826D; font-size:13px; font-weight:600; letter-spacing:0.01em;">กำลังโหลดภาพตัวอย่างจริง...</div>
+          </div>
+        </div>
+
+        <div class="export-side-stack">
+          <div class="export-config-card">
+            <div class="export-config-title">ขนาดไฟล์</div>
+            <div class="form-row" style="margin-bottom:0;">
+              <div class="form-group">
+                <label>ความกว้าง (px)</label>
+                <input type="number" class="form-input" id="exportWidthInput" min="600" max="3000" oninput="updateExportPreview()">
+              </div>
+              <div class="form-group">
+                <label>ความสูง (px)</label>
+                <input type="number" class="form-input" id="exportHeightInput" min="400" max="3000" oninput="updateExportPreview()">
+              </div>
+            </div>
+          </div>
+
+          <div class="export-config-card">
+            <div class="export-config-title">สีหลักของไฟล์ดาวโหลด</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>พื้นหลังภาพ</label>
+                <div class="export-color-field"><input type="color" id="exportBackgroundInput" oninput="syncExportColor('exportBackgroundInput')"><input type="text" class="form-input" id="exportBackgroundInputHex" oninput="syncExportHex('exportBackgroundInput')" placeholder="#FAF8F5"></div>
+              </div>
+              <div class="form-group">
+                <label>ขอบกรอบหลัก</label>
+                <div class="export-color-field"><input type="color" id="exportShellBorderInput" oninput="syncExportColor('exportShellBorderInput')"><input type="text" class="form-input" id="exportShellBorderInputHex" oninput="syncExportHex('exportShellBorderInput')" placeholder="#E5DEC3"></div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>พื้นกล่องสรุปด้านขวา</label>
+                <div class="export-color-field"><input type="color" id="exportSpecBackgroundInput" oninput="syncExportColor('exportSpecBackgroundInput')"><input type="text" class="form-input" id="exportSpecBackgroundInputHex" oninput="syncExportHex('exportSpecBackgroundInput')" placeholder="#FFFCF6"></div>
+              </div>
+              <div class="form-group">
+                <label>ขอบกล่องสรุปด้านขวา</label>
+                <div class="export-color-field"><input type="color" id="exportSpecBorderInput" oninput="syncExportColor('exportSpecBorderInput')"><input type="text" class="form-input" id="exportSpecBorderInputHex" oninput="syncExportHex('exportSpecBorderInput')" placeholder="#E5DEC3"></div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>พื้นการ์ดข้อมูลย่อย</label>
+                <div class="export-color-field"><input type="color" id="exportCardBackgroundInput" oninput="syncExportColor('exportCardBackgroundInput')"><input type="text" class="form-input" id="exportCardBackgroundInputHex" oninput="syncExportHex('exportCardBackgroundInput')" placeholder="#FFFFFF"></div>
+              </div>
+              <div class="form-group">
+                <label>ขอบการ์ดข้อมูลย่อย</label>
+                <div class="export-color-field"><input type="color" id="exportCardBorderInput" oninput="syncExportColor('exportCardBorderInput')"><input type="text" class="form-input" id="exportCardBorderInputHex" oninput="syncExportHex('exportCardBorderInput')" placeholder="#D4BE96"></div>
+              </div>
+            </div>
+            <div class="form-row" style="margin-bottom:0;">
+              <div class="form-group">
+                <label>ฟอนต์ของไฟล์</label>
+                <select class="form-select" id="exportFontFamilyInput" onchange="updateExportPreview()">
+                  <option value="'Noto Sans Thai', sans-serif">Noto Sans Thai</option>
+                  <option value="'IBM Plex Sans Thai', sans-serif">IBM Plex Sans Thai</option>
+                  <option value="'Noto Serif Thai', serif">Noto Serif Thai</option>
+                  <option value="Tahoma, sans-serif">Tahoma</option>
+                  <option value="Arial, sans-serif">Arial</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="export-config-card">
+            <div class="export-config-title">สีข้อความในไฟล์ดาวโหลด</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>หัวข้อกล่องสรุป</label>
+                <div class="export-color-field"><input type="color" id="exportHeadingColorInput" oninput="syncExportColor('exportHeadingColorInput')"><input type="text" class="form-input" id="exportHeadingColorInputHex" oninput="syncExportHex('exportHeadingColorInput')" placeholder="#8C6D37"></div>
+              </div>
+              <div class="form-group">
+                <label>ชื่อฟิลด์</label>
+                <div class="export-color-field"><input type="color" id="exportLabelColorInput" oninput="syncExportColor('exportLabelColorInput')"><input type="text" class="form-input" id="exportLabelColorInputHex" oninput="syncExportHex('exportLabelColorInput')" placeholder="#8F826D"></div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>ค่าข้อมูลทั่วไป</label>
+                <div class="export-color-field"><input type="color" id="exportValueColorInput" oninput="syncExportColor('exportValueColorInput')"><input type="text" class="form-input" id="exportValueColorInputHex" oninput="syncExportHex('exportValueColorInput')" placeholder="#1A1714"></div>
+              </div>
+              <div class="form-group">
+                <label>ค่าข้อความเน้น (เช่น SKU / แบรนด์)</label>
+                <div class="export-color-field"><input type="color" id="exportAccentColorInput" oninput="syncExportColor('exportAccentColorInput')"><input type="text" class="form-input" id="exportAccentColorInputHex" oninput="syncExportHex('exportAccentColorInput')" placeholder="#8C6D37"></div>
+              </div>
+            </div>
+            <div class="form-row" style="margin-bottom:0;">
+              <div class="form-group">
+                <label>ข้อความหมายเหตุด้านล่าง</label>
+                <div class="export-color-field"><input type="color" id="exportNoteColorInput" oninput="syncExportColor('exportNoteColorInput')"><input type="text" class="form-input" id="exportNoteColorInputHex" oninput="syncExportHex('exportNoteColorInput')" placeholder="#6B6257"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- -- MODAL: SKU ------------------------------------------- -->
+<div class="modal-overlay" id="skuModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="skuModalTitle">เพิ่ม SKU ใหม่</div>
+      <div class="modal-close" onclick="closeModal('skuModal')">&times;</div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="skuId">
+      <input type="hidden" id="skuCodeInput">
+      <div style="background:var(--bg);padding:10px 14px;border-radius:6px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:11px;color:var(--text3)">รหัส SKU (สร้างอัตโนมัติ)</div>
+          <div style="font-family:monospace;font-size:14px;font-weight:700;color:var(--gold)" id="skuCodePreview">CGA-D1-D1-D1-D1-200x200-H1</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="recalcSkuCode()">คำนวณใหม่</button>
+      </div>
+
+      <div class="form-group">
+        <label>รูปแบบ Panel</label>
+        <input type="text" class="form-input" id="skuPanelSignature" readonly style="background:var(--bg)">
+      </div>
+      <div class="form-group">
+        <label>Template รูปแบบ Panel</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="applyPanelTemplate('D1-D1-D1-D1')">D1-D1-D1-D1</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="applyPanelTemplate('D3-D1-D1-D1')">D3-D1-D1-D1</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="applyPanelTemplate('D1-D2-D2-D1')">D1-D2-D2-D1</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="applyPanelTemplate('D2-D2-D2-D2')">D2-D2-D2-D2</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Panel 1 (บานเลื่อน) *</label>
+          <select class="form-select" id="skuPanel1DoorKey" onchange="recalcSkuCode()"></select>
+        </div>
+        <div class="form-group">
+          <label>Panel 2 (บาน Fix) *</label>
+          <select class="form-select" id="skuPanel2DoorKey" onchange="recalcSkuCode()"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Panel 3 (บาน Fix) *</label>
+          <select class="form-select" id="skuPanel3DoorKey" onchange="recalcSkuCode()"></select>
+        </div>
+        <div class="form-group">
+          <label>Panel 4 (บานเลื่อน) *</label>
+          <select class="form-select" id="skuPanel4DoorKey" onchange="recalcSkuCode()"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ขนาดประตู (จาก Supabase) *</label>
+          <select class="form-select" id="skuDoorSizeSelect" onchange="onSkuDoorSizeChange()">
+            <!-- Options dynamically loaded from Supabase door_sizes -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label>มือจับประตู (คีย์มือจับจาก Supabase) *</label>
+          <select class="form-select" id="skuHandleKey" onchange="onSkuHandleKeyChange()">
+            <!-- Options dynamically loaded from Supabase handle_products -->
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ชื่อมือจับ</label>
+          <input type="text" class="form-input" id="skuHandleName" readonly style="background:var(--bg)">
+        </div>
+      </div>
+
+      <input type="hidden" id="skuWidth" value="200">
+      <input type="hidden" id="skuHeight" value="200">
+
+      <div class="form-group">
+        <label>สถานะ</label>
+        <select class="form-select" id="skuActive">
+          <option value="true">เปิดใช้งาน</option>
+          <option value="false">ปิดใช้งาน</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('skuModal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveSku()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- -- MODAL: SCENE ------------------------------------------ -->
+<div class="modal-overlay" id="sceneModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="sceneModalTitle">เพิ่มฉากห้อง</div>
+      <div class="modal-close" onclick="closeModal('sceneModal')">&times;</div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sceneId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>คีย์ฉากห้อง (ไม่ซ้ำกัน) *</label>
+          <input type="text" class="form-input" id="sceneKeyInput" placeholder="scene-living">
+        </div>
+        <div class="form-group">
+          <label>ลำดับการแสดงผล (Sort Order)</label>
+          <input type="number" class="form-input" id="sceneSortOrderInput" value="0" placeholder="เช่น 1, 2, 3">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ชื่อฉากห้อง *</label>
+        <input type="text" class="form-input" id="sceneNameInput" placeholder="เช่น ห้องนั่งเล่น">
+      </div>
+      <div class="form-group">
+        <label>รูปฉากห้อง (อัปโหลดหรือวางลิงก์) *</label>
+        <div class="upload-zone" onclick="document.getElementById('sceneFileInput').click()">
+          <div class="upload-icon">📤</div>
+          <div class="upload-text">คลิกเพื่อเลือกไฟล์ หรืออัปโหลดรูปฉากห้อง</div>
+          <div class="upload-sub">รองรับ .jpg, .png, .webp (จะอัปโหลดไป Bucket `door-scenes/rooms`)</div>
+          <input type="file" id="sceneFileInput" accept="image/*" style="display:none" onchange="handleImagePick(this, 'scenePreviewBox', 'scenePathInput')">
+        </div>
+        <div class="preview-img-box" id="scenePreviewBox" style="display:none">
+          <img id="scenePreviewImg" src="">
+          <span style="font-size:12px;color:var(--green);font-weight:600">อัปโหลดแล้ว</span>
+        </div>
+        <input type="text" class="form-input" id="scenePathInput" placeholder="หรือวาง URL ของรูปภาพ" style="margin-top:6px">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ความกว้างพื้นที่ภาพ (px)</label>
+          <input type="number" class="form-input" id="sceneWInput" value="364">
+        </div>
+        <div class="form-group">
+          <label>ความสูงพื้นที่ภาพ (px)</label>
+          <input type="number" class="form-input" id="sceneHInput" value="405">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ตำแหน่งเส้นพื้น (floor_frac)</label>
+        <input type="number" step="0.0001" class="form-input" id="sceneFloorFracInput" value="0.952">
+      </div>
+      <div class="form-group">
+        <label>ตำแหน่งขอบผนังด้านบน (wall_top_frac)</label>
+        <input type="number" step="0.0001" class="form-input" id="sceneWallTopFracInput" value="0.093">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ความกว้างห้องจริง (ซม.)</label>
+          <input type="number" class="form-input" id="sceneRoomWidthCmInput" value="300">
+        </div>
+        <div class="form-group">
+          <label>ความสูงห้องจริง (ซม.)</label>
+          <input type="number" class="form-input" id="sceneRoomHeightCmInput" value="300">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>สถานะ</label>
+        <select class="form-select" id="sceneActiveInput">
+          <option value="true">เปิดใช้งาน</option>
+          <option value="false">ปิดใช้งาน</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('sceneModal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveScene()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- -- MODAL: DOOR ------------------------------------------- -->
+<div class="modal-overlay" id="doorModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="doorModalTitle">เพิ่มบานประตู</div>
+      <div class="modal-close" onclick="closeModal('doorModal')">&times;</div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="doorId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>คีย์บานประตู (ไม่ซ้ำกัน) *</label>
+          <input type="text" class="form-input" id="doorKeyInput" placeholder="door3">
+        </div>
+        <div class="form-group">
+          <label>ลำดับการแสดงผล (Sort Order)</label>
+          <input type="number" class="form-input" id="doorSortOrderInput" value="0" placeholder="เช่น 1, 2, 3">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ชื่อบานประตู *</label>
+          <input type="text" class="form-input" id="doorNameInput" placeholder="เช่น D1 / D2 / D3 หรือชื่อที่ใช้จริงในหน้าเลือกบาน">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>รูปบานประตู (PNG โปร่งใสหรือวางลิงก์) *</label>
+        <div class="upload-zone" onclick="document.getElementById('doorFileInput').click()">
+          <div class="upload-icon">📤</div>
+          <div class="upload-text">อัปโหลดรูปบานประตูแบบ PNG พื้นหลังโปร่งใส</div>
+          <div class="upload-sub">ระบบจะอัปโหลดไป Bucket `door-scenes/doors`</div>
+          <input type="file" id="doorFileInput" accept="image/*" style="display:none" onchange="handleImagePick(this, 'doorPreviewBox', 'doorPathInput')">
+        </div>
+        <div class="preview-img-box" id="doorPreviewBox" style="display:none">
+          <img id="doorPreviewImg" src="">
+          <span style="font-size:12px;color:var(--green);font-weight:600">อัปโหลดแล้ว</span>
+        </div>
+        <input type="text" class="form-input" id="doorPathInput" placeholder="หรือวาง URL ของรูปบานประตู" style="margin-top:6px">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ความกว้างพื้นที่ภาพ</label>
+          <input type="number" class="form-input" id="doorCanvasWInput" value="299">
+        </div>
+        <div class="form-group">
+          <label>ความสูงพื้นที่ภาพ</label>
+          <input type="number" class="form-input" id="doorCanvasHInput" value="509">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>สัดส่วนขอบล่าง</label>
+          <input type="number" step="0.0001" class="form-input" id="doorBottomFracInput" value="0.9862">
+        </div>
+        <div class="form-group">
+          <label>ตำแหน่งมือจับแกน X</label>
+          <input type="number" step="0.0001" class="form-input" id="doorHandleXFracInput" placeholder="เช่น 0.50">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ตำแหน่งมือจับแกน Y</label>
+          <input type="number" step="0.0001" class="form-input" id="doorHandleYFracInput" placeholder="เช่น 0.58">
+        </div>
+        <div class="form-group">
+          <label>ขนาดมือจับ (Scale)</label>
+          <input type="number" step="0.0001" class="form-input" id="doorHandleScaleInput" placeholder="เช่น 0.165">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>สถานะ</label>
+        <select class="form-select" id="doorActiveInput">
+          <option value="true">เปิดใช้งาน</option>
+          <option value="false">ปิดใช้งาน</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('doorModal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveDoor()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- -- MODAL: HANDLE ----------------------------------------- -->
+<div class="modal-overlay" id="handleModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="handleModalTitle">เพิ่มมือจับประตู</div>
+      <div class="modal-close" onclick="closeModal('handleModal')">&times;</div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="handleId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>คีย์มือจับ (ไม่ซ้ำกัน) *</label>
+          <input type="text" class="form-input" id="handleKeyInput" placeholder="handle3">
+        </div>
+        <div class="form-group">
+          <label>ลำดับการแสดงผล (Sort Order)</label>
+          <input type="number" class="form-input" id="handleSortOrderInput" value="0" placeholder="เช่น 1, 2, 3">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ชื่อมือจับ *</label>
+        <input type="text" class="form-input" id="handleNameInput" placeholder="เช่น มือจับสีเงิน">
+      </div>
+      <div class="form-group">
+        <label>รูปมือจับ (PNG โปร่งใส) *</label>
+        <div class="upload-zone" onclick="document.getElementById('handleFileInput').click()">
+          <div class="upload-icon">📤</div>
+          <div class="upload-text">อัปโหลดรูปมือจับแบบ PNG พื้นหลังโปร่งใส</div>
+          <input type="file" id="handleFileInput" accept="image/*" style="display:none" onchange="handleImagePick(this, 'handlePreviewBox', 'handlePathInput')">
+        </div>
+        <div class="preview-img-box" id="handlePreviewBox" style="display:none">
+          <img id="handlePreviewImg" src="">
+        </div>
+        <input type="text" class="form-input" id="handlePathInput" placeholder="หรือวาง URL ของรูปมือจับ" style="margin-top:6px">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ตำแหน่งมือจับแกน X</label>
+          <input type="number" step="0.0001" class="form-input" id="handleXFracInput" placeholder="เช่น 0.50">
+        </div>
+        <div class="form-group">
+          <label>ตำแหน่งมือจับแกน Y</label>
+          <input type="number" step="0.0001" class="form-input" id="handleYFracInput" placeholder="เช่น 0.58">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ขนาดมือจับ (Scale)</label>
+        <input type="number" step="0.0001" class="form-input" id="handleScaleInput" placeholder="เช่น 0.165">
+      </div>
+      <div class="form-group">
+        <label>สถานะ</label>
+        <select class="form-select" id="handleActiveInput">
+          <option value="true">เปิดใช้งาน</option>
+          <option value="false">ปิดใช้งาน</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('handleModal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveHandle()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- -- MODAL: SIZE ------------------------------------------- -->
+<div class="modal-overlay" id="sizeModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="sizeModalTitle">เพิ่มขนาดประตู</div>
+      <div class="modal-close" onclick="closeModal('sizeModal')">&times;</div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sizeId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>ความกว้าง (ซม.) *</label>
+          <input type="number" class="form-input" id="sizeWidthInput" value="200" oninput="updateSizeKeyLabel()">
+        </div>
+        <div class="form-group">
+          <label>ความสูง (ซม.) *</label>
+          <input type="number" class="form-input" id="sizeHeightInput" value="200" oninput="updateSizeKeyLabel()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>คีย์ขนาด</label>
+        <input type="text" class="form-input" id="sizeKeyInput" readonly style="background:var(--bg)">
+      </div>
+      <div class="form-group">
+        <label>ชื่อขนาด</label>
+        <input type="text" class="form-input" id="sizeLabelInput" readonly style="background:var(--bg)">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('sizeModal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveSize()">บันทึก</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Confirm Overlay -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title">ยืนยันการลบ</div>
+    <div class="confirm-msg" id="confirmMsg">คุณต้องการลบรายการนี้ใช่หรือไม่</div>
+    <div class="confirm-btns">
+      <button class="btn btn-ghost" onclick="closeConfirm()">ยกเลิก</button>
+      <button class="btn btn-danger" id="confirmOkBtn">ลบ</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// -- Supabase Client ------------------------------------------
+const SUPABASE_URL  = 'https://jxvoejdqcjxndqwqgvoj.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4dm9lamRxY2p4bmRxd3Fndm9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NzY4MTEsImV4cCI6MjEwMDI1MjgxMX0.OHXJVqB_99UadWY6_6CMSMv67QTtulD7aYKaXjdtYho';
+const sb            = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// State Arrays
+let rawSkus = [], rawScenes = [], rawDoors = [], rawHandles = [], rawSizes = [];
+let activeTab = 'skus';
+let pendingFile = null, pendingFileTargetUrlInput = null;
+let currentUser = null;
+let managerBootstrapped = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const logoFileInput = document.getElementById('websiteLogoFileInput');
+  const saveLogoBtn = document.getElementById('saveWebsiteLogoBtn');
+  const reloadLogoBtn = document.getElementById('reloadWebsiteLogoBtn');
+  const clearLogoBtn = document.getElementById('clearWebsiteLogoBtn');
+  const appearancePreview = document.getElementById('appearanceLivePreview');
+
+  if (appearancePreview) {
+    appearancePreview.addEventListener('load', () => {
+      document.getElementById('appearancePreviewStatus').textContent = 'พร้อมดูตัวอย่างจริง';
+      bindAppearancePreviewInteractions();
+      sendAppearancePreview();
+    });
+  }
+
+  if (logoFileInput) logoFileInput.addEventListener('change', handleWebsiteLogoFileSelection);
+  if (saveLogoBtn) saveLogoBtn.addEventListener('click', saveWebsiteLogoSetting);
+  if (reloadLogoBtn) reloadLogoBtn.addEventListener('click', loadWebsiteLogoSetting);
+  if (clearLogoBtn) {
+    clearLogoBtn.addEventListener('click', () => {
+      document.getElementById('websiteLogoUrlInput').value = '';
+      document.getElementById('websiteLogoPreviewBox').style.display = 'none';
+      localStorage.removeItem('cgaWebsiteLogo');
+      toast('ค่าโลโก้เก่าถูกล้างแล้ว กรุณาเลือกไฟล์ใหม่หรือกรอก URL ใหม่', 'info');
+    });
+  }
+
+  initAuthGuard();
+});
+
+async function initAuthGuard() {
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) loginForm.addEventListener('submit', handleLoginSubmit);
+
+  const { data, error } = await sb.auth.getSession();
+  if (error) {
+    setAuthError(error.message || 'ตรวจสอบสถานะการเข้าสู่ระบบไม่สำเร็จ');
+  }
+  applySession(data?.session || null);
+
+  sb.auth.onAuthStateChange((_event, session) => {
+    applySession(session || null);
+  });
+}
+
+function applySession(session) {
+  currentUser = session?.user || null;
+  const isLoggedIn = !!currentUser;
+
+  document.getElementById('authScreen').classList.toggle('open', !isLoggedIn);
+  document.getElementById('managerShell').classList.toggle('open', isLoggedIn);
+  document.getElementById('headerUserBox').classList.toggle('open', isLoggedIn);
+  document.getElementById('logoutBtn').style.display = isLoggedIn ? 'inline-flex' : 'none';
+  document.getElementById('headerUserEmail').textContent = currentUser?.email || '-';
+
+  if (!isLoggedIn) {
+    managerBootstrapped = false;
+    clearAuthError();
+    return;
+  }
+
+  clearAuthError();
+  if (!managerBootstrapped) {
+    managerBootstrapped = true;
+    loadWebsiteLogoSetting();
+    loadSkus();
+    loadScenes();
+    loadDoors();
+    loadHandles();
+    loadSizes();
+    loadAppearanceSettings();
+    loadExportAppearanceSettings();
+  }
+}
+
+const APPEARANCE_POINTS = [
+  { key: 'hero', label: 'พื้นหลังแถบหัวเว็บ', selector: 'header.hero-nav', example: 'เปลี่ยนพื้นหลังแถบด้านบนที่มีโลโก้และปุ่มคัดลอกสเปก/ดาวน์โหลด', group: 'topbar' },
+  { key: 'logoText', label: 'ข้อความโลโก้สำรอง', selector: '.cga-alutech-logo .brand-cga, .cga-alutech-logo .brand-alutech', example: 'เปลี่ยนข้อความ CGA / Alutech ตอนที่ยังไม่ได้ใช้โลโก้รูปภาพ', group: 'topbar' },
+  { key: 'headerActionButton', label: 'ปุ่มบนแถบหัวเว็บ', selector: '.hero-nav .action-toolbar .btn', example: 'ปุ่ม คัดลอกสเปก และ ดาวน์โหลดรูปจำลอง', group: 'topbar' },
+  { key: 'stage', label: 'พื้นที่ภาพตัวอย่าง', selector: '.stage-card', example: 'กรอบใหญ่ฝั่งซ้ายที่แสดงภาพจำลองประตู', group: 'preview' },
+  { key: 'specCard', label: 'กล่องสรุปอุปกรณ์', selector: '.spec-card', example: 'กล่องสรุปรายการอุปกรณ์ที่เลือกใต้ภาพตัวอย่าง', group: 'preview' },
+  { key: 'specHeader', label: 'หัวข้อกล่องสรุป', selector: '.spec-card .spec-header', example: 'ข้อความ สรุปรายการอุปกรณ์ที่เลือก', group: 'summary' },
+  { key: 'specLabel', label: 'ป้ายกำกับค่าสเปก', selector: '.spec-card .spec-item .label', example: 'ข้อความฝั่งซ้ายเช่น แบรนด์สินค้า / ฉากห้อง / ลายบานประตู', group: 'summary' },
+  { key: 'specValue', label: 'ค่าข้อมูลสเปก', selector: '.spec-card .spec-item .value', example: 'ข้อความค่าฝั่งขวา เช่น ชื่อฉากห้อง หรือรหัส SKU', group: 'summary' },
+  { key: 'panel', label: 'แผงเลือกสินค้า', selector: '.panel-card', example: 'พื้นหลังกล่องฝั่งขวาที่มีแท็บ ฉากห้อง / บานประตู / มือจับประตู', group: 'selection' },
+  { key: 'navTabs', label: 'แถบขั้นตอน', selector: '.nav-tabs', example: 'แถบที่ครอบปุ่ม ฉากห้อง / บานประตู / มือจับประตู / แสดงทั้งหมด', group: 'selection' },
+  { key: 'tabButton', label: 'ปุ่มขั้นตอน', selector: '.panel-card .tab-btn', example: 'ปุ่มแท็บทั้งหมดรวมกัน ก่อนแยกปรับรายปุ่ม', group: 'selection' },
+  { key: 'sceneTabButton', label: 'ปุ่มฉากห้อง', selector: '.panel-card .tab-btn[data-tab="scene"]', example: 'ปุ่ม ฉากห้อง ด้านบนของฝั่งขวา', group: 'selection' },
+  { key: 'doorTabButton', label: 'ปุ่มบานประตู', selector: '.panel-card .tab-btn[data-tab="door"]', example: 'ปุ่ม บานประตู ด้านบนของฝั่งขวา', group: 'selection' },
+  { key: 'handleTabButton', label: 'ปุ่มมือจับประตู', selector: '.panel-card .tab-btn[data-tab="handle"]', example: 'ปุ่ม มือจับประตู ด้านบนของฝั่งขวา', group: 'selection' },
+  { key: 'allTabButton', label: 'ปุ่มแสดงทั้งหมด', selector: '.panel-card .tab-btn[data-tab="all"]', example: 'ปุ่ม แสดงทั้งหมด ด้านบนของฝั่งขวา', group: 'selection' },
+  { key: 'tabTitle', label: 'ข้อความชื่อขั้นตอน', selector: '.panel-card .tab-title', example: 'เฉพาะคำบนปุ่มแท็บ เช่น ฉากห้อง / บานประตู / มือจับประตู / แสดงทั้งหมด', group: 'selection' },
+  { key: 'navBorder', label: 'ขอบแถบขั้นตอน', selector: '.panel-card .nav-tabs', example: 'เส้นขอบรอบแถบขั้นตอนด้านบนของฝั่งขวา', group: 'selection' },
+  { key: 'sectionTitle', label: 'หัวข้อส่วนเลือก', selector: '.panel-card .section-title', example: 'ข้อความหัวข้อเช่น ขั้นตอนที่ 1: เลือกฉากห้อง', group: 'selection' },
+  { key: 'sectionDesc', label: 'คำอธิบายส่วนเลือก', selector: '.panel-card .section-desc', example: 'ข้อความอธิบายใต้หัวข้อแต่ละขั้นตอน', group: 'selection' },
+  { key: 'search', label: 'ช่องค้นหา', selector: '.search-wrapper', example: 'กล่องค้นหาที่มีข้อความ เช่น ค้นหาฉากห้อง...', group: 'selection' },
+  { key: 'searchBorder', label: 'ขอบช่องค้นหา', selector: '.panel-card .search-wrapper .search-input', example: 'สีเส้นขอบของช่องค้นหา', group: 'selection' },
+  { key: 'swatches', label: 'การ์ดรายการตัวเลือก', selector: '.swatch-card', example: 'การ์ดตัวเลือกสินค้าแต่ละใบในรายการฉากห้อง/บานประตู/มือจับ', group: 'selection' },
+  { key: 'swatchBorder', label: 'ขอบการ์ดตัวเลือก', selector: '.panel-card .swatch-card', example: 'สีเส้นขอบของการ์ดสินค้าแต่ละใบ', group: 'selection' },
+  { key: 'selectedCheckBadge', label: 'เครื่องหมายถูกบนรายการที่เลือก', selector: '.check-badge', example: 'วงกลมพร้อมเครื่องหมายถูกมุมขวาบนของการ์ดที่เลือก', group: 'selection' },
+  { key: 'panelChips', label: 'พื้นหลังส่วนเลือก Panel', selector: '#doorColorGroup', example: 'พื้นหลังของบล็อกเลือก Panel ทั้งชุด ที่มีหัวข้อและปุ่ม Panel 1-4', group: 'selection' },
+  { key: 'chipButton', label: 'ปุ่ม Panel 1-4', selector: '.chip-btn', example: 'ปุ่ม Panel 1, Panel 2, Panel 3, Panel 4', group: 'selection' },
+  { key: 'subFilterLabel', label: 'ข้อความหัวข้อเลือก Panel', selector: '.panel-card .sub-filter-label', example: 'ข้อความด้านบน เช่น เลือก Panel ที่กำลังแก้ไข (ภาพตัวอย่างแสดงครบ 4 ช่อง):', group: 'selection' },
+  { key: 'navButton', label: 'ปุ่มนำทาง', selector: '.panel-card .nav-btn', example: 'ปุ่ม ย้อนกลับ หรือ ถัดไป ในแต่ละขั้นตอน', group: 'selection' },
+  { key: 'regularButton', label: 'ปุ่มในแผงเลือกสินค้า', selector: '.panel-card .btn', example: 'ปุ่มทั่วไปในฝั่งขวา เช่น ปุ่มสรุปการเลือกทั้งหมด หรือปุ่มภายในแผง', group: 'selection' },
+  { key: 'bodyBackground', label: 'ฉากหลังเว็บไซต์', selector: 'body', example: 'พื้นหลังรอบนอกของทั้งหน้าเว็บ visualizer', group: 'page' },
+  { key: 'bodyFont', label: 'ฟอนต์เว็บไซต์', selector: 'body', example: 'ฟอนต์หลักของหน้า visualizer ทั้งหน้า', group: 'page' },
+  { key: 'mobileActionButton', label: 'ปุ่มดาวน์โหลดบนมือถือ', selector: '#mobileDownloadBtn', example: 'ปุ่ม ดาวน์โหลดรูป ในแถบลอยด้านล่างบนมือถือ', group: 'mobile' }
+];
+const APPEARANCE_DEFAULTS = { background: '', backgroundImage: '', font: 'inherit', text: '', line: '', button: '' };
+const APPEARANCE_GROUPS = [
+  { key: 'topbar', title: '1. แถบบน', description: 'โลโก้ พื้นหลัง และปุ่มคัดลอก/ดาวน์โหลดด้านบน' },
+  { key: 'preview', title: '2. ฝั่งซ้าย', description: 'พื้นที่ภาพตัวอย่างและกล่องสรุปใต้ภาพ' },
+  { key: 'summary', title: '3. ข้อความในกล่องสรุป', description: 'หัวข้อ ป้ายกำกับ และค่าที่แสดงในสเปก' },
+  { key: 'selection', title: '4. ฝั่งขวา', description: 'แท็บขั้นตอน รายการสินค้า ตัวกรอง และปุ่มนำทาง' },
+  { key: 'page', title: '5. ทั้งหน้า', description: 'พื้นหลังรวมและฟอนต์หลักของเว็บ' },
+  { key: 'mobile', title: '6. มือถือ', description: 'องค์ประกอบที่แสดงเฉพาะบนมือถือ' }
+];
+const APPEARANCE_BUTTON_KEYS = ['headerActionButton', 'regularButton', 'mobileActionButton', 'tabButton', 'sceneTabButton', 'doorTabButton', 'handleTabButton', 'allTabButton', 'chipButton', 'navButton', 'selectedCheckBadge'];
+const APPEARANCE_TEXT_ONLY_KEYS = ['logoText', 'sectionTitle', 'sectionDesc', 'subFilterLabel', 'tabTitle', 'specHeader', 'specLabel', 'specValue'];
+const APPEARANCE_BUTTON_CONTROL_KEYS = ['hero', 'panel', 'navTabs'];
+const APPEARANCE_BORDER_CONTROL_KEYS = ['hero', 'stage', 'panel', 'navTabs', 'search', 'searchBorder', 'swatches', 'swatchBorder', 'navBorder', 'panelChips', ...APPEARANCE_BUTTON_KEYS];
+const APPEARANCE_TEXT_CONTROL_KEYS = ['logoText', 'stage', 'search', 'swatches', 'headerActionButton', 'regularButton', 'mobileActionButton', 'tabButton', 'sceneTabButton', 'doorTabButton', 'handleTabButton', 'allTabButton', 'chipButton', 'navButton', 'selectedCheckBadge', 'sectionTitle', 'sectionDesc', 'subFilterLabel', 'tabTitle', 'specHeader', 'specLabel', 'specValue'];
+const APPEARANCE_FONT_CONTROL_KEYS = ['bodyFont', ...APPEARANCE_TEXT_CONTROL_KEYS];
+const APPEARANCE_BACKGROUND_IMAGE_KEYS = ['hero', 'stage', 'panel', 'bodyBackground', 'specCard'];
+const EXPORT_APPEARANCE_DEFAULTS = {
+  width: 1200, height: 760, background: '#FAF8F5', shellBackground: '#FFFFFF', shellBorder: '#E5DEC3',
+  specBackground: '#FFFCF6', specBorder: '#E5DEC3', cardBackground: '#FFFFFF', cardBorder: '#D4BE96',
+  headingColor: '#8C6D37', labelColor: '#8F826D', valueColor: '#1A1714', accentColor: '#8C6D37',
+  noteColor: '#6B6257', fontFamily: "'Noto Sans Thai', sans-serif"
+};
+let appearanceSettings = {};
+let exportAppearanceSettings = {};
+let quickThemePreviewEnabled = false;
+let quickSectionThemePreviewEnabled = false;
+let inlineAppearancePointKey = '';
+let exportPreviewAssetToken = 0;
+const QUICK_THEME_SECTIONS = [
+  { key: 'topbar', title: 'แถบบน', background: '#ffffff', text: '#17324d', line: '#c8d8e2', button: '#1f6f8b' },
+  { key: 'preview', title: 'ฝั่งภาพตัวอย่าง', background: '#ffffff', text: '#17324d', line: '#c8d8e2', button: '#1f6f8b' },
+  { key: 'summary', title: 'กล่องสรุป', background: '#ffffff', text: '#17324d', line: '#c8d8e2', button: '#1f6f8b' },
+  { key: 'selection', title: 'ฝั่งเลือกสินค้า', background: '#ffffff', text: '#17324d', line: '#c8d8e2', button: '#1f6f8b' },
+  { key: 'page', title: 'พื้นหลังทั้งหน้า', background: '#eef4f7', text: '#17324d', line: '#c8d8e2', button: '#1f6f8b' },
+  { key: 'mobile', title: 'แถบมือถือ', background: '#ffffff', text: '#17324d', line: '#c8d8e2', button: '#1f6f8b' }
+];
+const QUICK_FONT_OPTIONS = [
+  ['inherit', 'ใช้ฟอนต์เดิมของเว็บไซต์'],
+  ["'Noto Sans Thai', sans-serif", 'Noto Sans Thai'],
+  ["'IBM Plex Sans Thai', sans-serif", 'IBM Plex Sans Thai'],
+  ["'Noto Serif Thai', serif", 'Noto Serif Thai'],
+  ['Tahoma, sans-serif', 'Tahoma'],
+  ['Arial, sans-serif', 'Arial']
+];
+
+function getAppearancePreviewConfig(pointKey) {
+  return {
+    background: document.getElementById(`${pointKey}-background`)?.value || '#ffffff',
+    backgroundImage: document.getElementById(`${pointKey}-background-image`)?.value.trim() || '',
+    text: document.getElementById(`${pointKey}-text`)?.value || '#1a1714',
+    line: document.getElementById(`${pointKey}-line`)?.value || '#e5dec3',
+    button: document.getElementById(`${pointKey}-button`)?.value || '#c5a059',
+    font: document.getElementById(`${pointKey}-font`)?.value || "'IBM Plex Sans Thai', sans-serif"
+  };
+}
+
+function getAppearanceExampleHtml(pointKey, config) {
+  const background = config.background || '#ffffff';
+  const text = config.text || '#1a1714';
+  const line = config.line || '#e5dec3';
+  const button = config.button || background || '#c5a059';
+  const font = config.font && config.font !== 'inherit' ? config.font : "'IBM Plex Sans Thai', sans-serif";
+  const bgImage = config.backgroundImage ? `background-image:url('${config.backgroundImage}');background-size:cover;background-position:center;` : '';
+  const tabButtonColor = pointKey.includes('TabButton') || pointKey === 'tabButton' ? background : '#1b2230';
+  const tabTextColor = pointKey.includes('TabButton') || pointKey === 'tabButton' || pointKey === 'tabTitle' ? text : '#dfe5ef';
+
+  if (pointKey === 'hero') {
+    return `<div class="appearance-example-canvas"><div class="appearance-example-topbar" style="background:${background};color:${text};border:1px solid ${line};font-family:${font};${bgImage}"><div class="appearance-example-logo"><span>CGA</span><span>Alutech</span></div><div class="appearance-example-actions"><span class="appearance-example-btn" style="background:#1b2230;color:#94a3b8;border-color:#334155;opacity:0.8;">คัดลอก</span><span class="appearance-example-btn" style="background:#1b2230;color:#94a3b8;border-color:#334155;opacity:0.8;">ดาวน์โหลด</span></div></div><div class="appearance-example-note">หัวข้อนี้เปลี่ยนเฉพาะพื้นหลังของแถบบน ปุ่มสองอันต้องไปตั้งที่ <strong>ปุ่มบนแถบหัวเว็บ</strong></div></div>`;
+  }
+  if (pointKey === 'logoText') {
+    return `<div class="appearance-example-canvas"><div class="appearance-example-topbar" style="background:#121720;border:1px solid #273142;"><div class="appearance-example-logo" style="color:${text};font-family:${font};"><span>CGA</span><span>Alutech</span></div></div><div class="appearance-example-note">ใช้เฉพาะตอนแสดงโลโก้แบบข้อความ</div></div>`;
+  }
+  if (['headerActionButton', 'regularButton', 'mobileActionButton', 'navButton', 'chipButton', 'selectedCheckBadge'].includes(pointKey)) {
+    return `<div class="appearance-example-canvas"><div class="appearance-example-actions" style="font-family:${font};"><span class="appearance-example-btn" style="background:${background};color:${text};border-color:${line};">ตัวอย่างปุ่ม</span><span class="appearance-example-btn" style="background:${background};color:${text};border-color:${line};">อีกปุ่ม</span></div><div class="appearance-example-note">ตัวอย่างสีปุ่ม ข้อความ และฟอนต์</div></div>`;
+  }
+  if (['tabButton', 'sceneTabButton', 'doorTabButton', 'handleTabButton', 'allTabButton', 'tabTitle', 'navTabs', 'navBorder'].includes(pointKey)) {
+    const labels = [
+      { key: 'scene', text: 'ฉากห้อง' },
+      { key: 'door', text: 'บานประตู' },
+      { key: 'handle', text: 'มือจับ' },
+      { key: 'all', text: 'ทั้งหมด' }
+    ];
+    return `<div class="appearance-example-canvas"><div class="appearance-example-tabs" style="font-family:${font};border:${pointKey === 'navBorder' ? `1px solid ${line}` : '1px solid transparent'};padding:${pointKey === 'navBorder' ? '8px' : '0'};border-radius:10px;">${labels.map((item) => {
+      const active =
+        pointKey === 'tabButton' ||
+        (pointKey === 'sceneTabButton' && item.key === 'scene') ||
+        (pointKey === 'doorTabButton' && item.key === 'door') ||
+        (pointKey === 'handleTabButton' && item.key === 'handle') ||
+        (pointKey === 'allTabButton' && item.key === 'all') ||
+        pointKey === 'tabTitle';
+      return `<span class="appearance-example-tab" style="background:${active ? background : '#1b2230'};color:${active ? text : '#dfe5ef'};border-color:${active ? line : '#334155'};">${item.text}</span>`;
+    }).join('')}</div><div class="appearance-example-note">ตัวอย่างปุ่มแท็บด้านบนของฝั่งขวา</div></div>`;
+  }
+  if (pointKey === 'stage') {
+    return `<div class="appearance-example-canvas"><div class="appearance-example-stage" style="background:${background};color:${text};border:1px solid ${line};font-family:${font};${bgImage}"><span class="appearance-example-badge" style="background:${button};color:${text};">ตัวอย่างภาพสมจริง</span><div class="appearance-example-stage-box"></div></div></div>`;
+  }
+  if (['search', 'searchBorder'].includes(pointKey)) {
+    return `<div class="appearance-example-canvas"><div class="appearance-example-search" style="background:${background};color:${text};border-color:${line};font-family:${font};">ค้นหาฉากห้อง...</div><div class="appearance-example-note">ตัวอย่างกล่องค้นหา</div></div>`;
+  }
+  if (['swatches', 'swatchBorder'].includes(pointKey)) {
+    return `<div class="appearance-example-canvas"><div class="appearance-example-swatches"><div class="appearance-example-swatch" style="position:relative;background:${background};border-color:${line};"><span style="position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;background:#8c6d37;border:2px solid #ffffff;color:#ffffff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;">✓</span></div><div class="appearance-example-swatch" style="background:${background};border-color:${line};"></div><div class="appearance-example-swatch" style="background:${background};border-color:${line};"></div></div><div class="appearance-example-note">ตัวอย่างการ์ดตัวเลือกสินค้า</div></div>`;
+  }
+  if (pointKey === 'selectedCheckBadge') {
+    return `<div class="appearance-example-canvas"><div class="appearance-example-swatches"><div class="appearance-example-swatch" style="position:relative;background:#f3f4f6;border:1px solid #cbd5e1;"><span style="position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;background:${background};border:2px solid ${line};color:${text};font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;">✓</span></div><div class="appearance-example-swatch" style="background:#e5e7eb;border:1px solid #cbd5e1;"></div><div class="appearance-example-swatch" style="background:#d1d5db;border:1px solid #cbd5e1;"></div></div><div class="appearance-example-note">ตัวอย่างวงกลมและเครื่องหมายถูกของการ์ดที่เลือก</div></div>`;
+  }
+  if (pointKey === 'panelChips') {
+    return `<div class="appearance-example-canvas"><div class="appearance-example-panel" style="background:${background};color:${text};border:1px solid ${line};border-radius:16px;padding:12px;font-family:${font};${bgImage}"><div style="font-size:11px;font-weight:800;color:${text};margin-bottom:8px;">เลือก Panel ที่กำลังแก้ไข</div><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:999px;background:${button};border:1px solid ${line};color:${text};"><span style="font-size:11px;font-weight:800;">Panel 3 (บาน Fix)</span><span style="font-size:12px;opacity:0.9;">▾</span></div></div><div class="appearance-example-note">จุดนี้ใช้กับกรอบครอบหัวข้อและช่องเลือก Panel ทั้งก้อน</div></div>`;
+  }
+  if (['panel', 'sectionTitle', 'sectionDesc', 'subFilterLabel'].includes(pointKey)) {
+    return `<div class="appearance-example-canvas"><div class="appearance-example-panel" style="background:${background};color:${text};border:1px solid ${line};font-family:${font};${bgImage}"><div style="font-size:12px;font-weight:800;">ขั้นตอนที่ 1: เลือกฉากห้อง</div><div style="margin-top:4px;font-size:10px;opacity:0.82;">โทนสีผนังและบรรยากาศภายในห้องที่ต้องการจำลอง</div><div class="appearance-example-chip-row"><span class="appearance-example-chip" style="background:${button};color:${text};border-color:${line};">Panel 1</span><span class="appearance-example-chip" style="background:${button};color:${text};border-color:${line};">Panel 2</span></div></div></div>`;
+  }
+  if (['specCard', 'specHeader', 'specLabel', 'specValue'].includes(pointKey)) {
+    return `<div class="appearance-example-canvas"><div class="appearance-example-spec" style="background:${background};color:${text};border:1px solid ${line};font-family:${font};${bgImage}"><div class="appearance-example-spec-title" style="color:${pointKey === 'specHeader' ? text : '#d7ad62'};">สรุปรายการอุปกรณ์ที่เลือก</div><div class="appearance-example-spec-row"><span class="appearance-example-spec-label" style="color:${pointKey === 'specLabel' ? text : '#aab3c2'};">ฉากห้อง</span><span class="appearance-example-spec-value" style="color:${pointKey === 'specValue' ? text : '#f1eee8'};">ห้องนั่งเล่น</span></div><div class="appearance-example-spec-row"><span class="appearance-example-spec-label" style="color:${pointKey === 'specLabel' ? text : '#aab3c2'};">รหัส SKU</span><span class="appearance-example-spec-value" style="color:${pointKey === 'specValue' ? text : '#f1eee8'};">CGA-001</span></div></div></div>`;
+  }
+  if (['bodyBackground', 'bodyFont'].includes(pointKey)) {
+    return `<div class="appearance-example-canvas" style="background:${background};border-color:${line};font-family:${font};${bgImage}"><div class="appearance-example-page" style="color:${text};"><div class="appearance-example-page-title">Door Visualizer</div><div class="appearance-example-page-sub">ตัวอย่างพื้นหลังและฟอนต์หลักของทั้งหน้าเว็บ</div></div></div>`;
+  }
+  return `<div class="appearance-example-canvas"><div class="appearance-example-page" style="background:${background};color:${text};border:1px solid ${line};font-family:${font};${bgImage}"><div class="appearance-example-page-title">ตัวอย่างการเปลี่ยนแปลง</div><div class="appearance-example-page-sub">ดูผลของสี ข้อความ และฟอนต์ในจุดนี้</div></div></div>`;
+}
+
+function getAppearanceSettingsFromForm() {
+  return APPEARANCE_POINTS.reduce((result, point) => {
+    result[point.key] = {
+      background: document.getElementById(`${point.key}-background`)?.value || '',
+      backgroundImage: document.getElementById(`${point.key}-background-image`)?.value.trim() || '',
+      font: document.getElementById(`${point.key}-font`)?.value || 'inherit',
+      text: document.getElementById(`${point.key}-text`)?.value || '',
+      line: document.getElementById(`${point.key}-line`)?.value || '',
+      button: document.getElementById(`${point.key}-button`)?.value || ''
+    };
+    return result;
+  }, {});
+}
+
+function getAppearancePreviewTab(pointKey = '') {
+  const doorTabKeys = ['doorTabButton', 'panelChips', 'chipButton', 'subFilterLabel'];
+  const handleTabKeys = ['handleTabButton'];
+  const allTabKeys = ['allTabButton'];
+  const sceneTabKeys = ['sceneTabButton'];
+
+  if (doorTabKeys.includes(pointKey)) return 'door';
+  if (handleTabKeys.includes(pointKey)) return 'handle';
+  if (allTabKeys.includes(pointKey)) return 'all';
+  if (sceneTabKeys.includes(pointKey)) return 'scene';
+  return '';
+}
+
+function sendAppearancePreview() {
+  const frame = document.getElementById('appearanceLivePreview');
+  if (!frame?.contentWindow) return;
+  const theme = getAppearanceSettingsFromForm();
+  const selectedPointKey = document.querySelector('.appearance-card.is-selected')?.dataset.appearanceKey || inlineAppearancePointKey || '';
+  const previewTab = getAppearancePreviewTab(selectedPointKey);
+  if (quickThemePreviewEnabled) applyQuickThemeToSettings(theme, getQuickTheme());
+  if (quickSectionThemePreviewEnabled) applyQuickSectionThemesToSettings(theme, getQuickSectionThemes());
+  frame.contentWindow.postMessage({
+    type: 'cga-appearance-preview',
+    theme,
+    previewTab
+  }, window.location.origin);
+  const status = document.getElementById('appearancePreviewStatus');
+  if (status) status.textContent = previewTab ? `กำลังแสดงค่าร่างล่าสุด (${previewTab})` : 'กำลังแสดงค่าร่างล่าสุด';
+}
+
+function renderQuickThemeSections() {
+  const container = document.getElementById('appearanceQuickSections');
+  if (!container) return;
+  const globalFont = appearanceSettings.bodyFont?.font || 'inherit';
+  const globalFontSelect = document.getElementById('quickThemeFont');
+  if (globalFontSelect) globalFontSelect.innerHTML = QUICK_FONT_OPTIONS.map(([value, label]) => `<option value="${value}" ${globalFont === value ? 'selected' : ''}>${label}</option>`).join('');
+  const groupOptionLabels = { background: 'พื้นหลัง', text: 'ข้อความ', line: 'ขอบ', button: 'ปุ่ม' };
+  const groupOptionVisibility = {
+    topbar: { background: true, text: false, line: true, button: true },
+    preview: { background: true, text: true, line: true, button: true },
+    summary: { background: true, text: true, line: false, button: false },
+    selection: { background: true, text: true, line: true, button: true },
+    page: { background: true, text: false, line: true, button: false },
+    mobile: { background: true, text: true, line: true, button: false }
+  };
+  container.innerHTML = QUICK_THEME_SECTIONS.map((section) => {
+    const saved = appearanceSettings[section.key] || {};
+    const colors = {
+      background: saved.background || section.background,
+      text: saved.text || section.text,
+      line: saved.line || section.line,
+      button: saved.button || saved.background || section.button,
+      font: saved.font || globalFont
+    };
+    const visible = groupOptionVisibility[section.key] || { background: true, text: true, line: true, button: true };
+    const colorControls = Object.entries(groupOptionLabels)
+      .filter(([field]) => visible[field])
+      .map(([field, label]) => `<label class="appearance-quick-color"><input type="color" id="quick-${section.key}-${field}" value="${colors[field]}" oninput="previewQuickSectionThemeChange()"><span>${label}</span></label>`)
+      .join('');
+    return `<div class="appearance-quick-section">
+      <div class="appearance-quick-section-title">${section.title}</div>
+      <div class="appearance-quick-section-colors">
+        ${colorControls}
+      </div>
+      <label class="appearance-quick-font">ฟอนต์ของส่วนนี้<select id="quick-${section.key}-font" onchange="previewQuickSectionThemeChange()">${QUICK_FONT_OPTIONS.map(([value, label]) => `<option value="${value}" ${colors.font === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label>
+    </div>`;
+  }).join('');
+}
+
+function getQuickSectionThemes() {
+  return QUICK_THEME_SECTIONS.reduce((result, section) => {
+    const read = (field, fallback) => document.getElementById(`quick-${section.key}-${field}`)?.value || fallback;
+    result[section.key] = {
+      background: read('background', section.background),
+      text: read('text', section.text),
+      line: read('line', section.line),
+      button: read('button', section.button),
+      font: document.getElementById(`quick-${section.key}-font`)?.value || 'inherit'
+    };
+    return result;
+  }, {});
+}
+
+function applyQuickSectionThemesToSettings(theme, sections) {
+  const groupTargets = {
+    topbar: ['hero', 'logoText', 'headerActionButton'],
+    preview: ['stage', 'specCard'],
+    summary: ['specCard', 'specHeader', 'specLabel', 'specValue'],
+    selection: ['panel', 'navTabs', 'tabButton', 'sceneTabButton', 'doorTabButton', 'handleTabButton', 'allTabButton', 'tabTitle', 'navBorder', 'sectionTitle', 'sectionDesc', 'search', 'searchBorder', 'swatches', 'swatchBorder', 'panelChips', 'chipButton', 'subFilterLabel', 'navButton', 'regularButton'],
+    page: ['bodyBackground', 'bodyFont'],
+    mobile: ['mobileActionButton']
+  };
+  Object.entries(groupTargets).forEach(([groupKey, keys]) => {
+    const colors = sections[groupKey];
+    if (!colors) return;
+    keys.forEach((key) => {
+      theme[key] = { ...(theme[key] || {}), background: colors.background, text: colors.text, line: colors.line, button: colors.button, font: colors.font || 'inherit' };
+    });
+  });
+}
+
+function previewQuickSectionThemeChange() {
+  quickSectionThemePreviewEnabled = true;
+  sendAppearancePreview();
+}
+
+function applyQuickSectionThemes() {
+  const sections = getQuickSectionThemes();
+  const theme = getAppearanceSettingsFromForm();
+  applyQuickSectionThemesToSettings(theme, sections);
+  appearanceSettings = theme;
+  quickSectionThemePreviewEnabled = false;
+  renderAppearanceSettings();
+  toast('ใช้สีแยกส่วนกับหน้า Visualizer แล้ว กดบันทึกเพื่อเผยแพร่', 'success');
+}
+
+function getQuickTheme() {
+  const read = (id, fallback) => document.getElementById(id)?.value || fallback;
+  return {
+    page: read('quickThemePage', '#eef4f7'),
+    surface: read('quickThemeSurface', '#ffffff'),
+    button: read('quickThemeButton', '#1f6f8b'),
+    text: read('quickThemeText', '#17324d'),
+    line: read('quickThemeLine', '#c8d8e2'),
+    font: document.getElementById('quickThemeFont')?.value || 'inherit'
+  };
+}
+
+function applyQuickThemeToSettings(theme, quick) {
+  ['hero', 'bodyBackground'].forEach((key) => {
+    theme[key] = { ...(theme[key] || {}), background: key === 'hero' ? quick.surface : quick.page, text: quick.text, line: quick.line, font: quick.font };
+  });
+  ['stage', 'specCard', 'panel', 'navTabs', 'search', 'swatches', 'panelChips'].forEach((key) => {
+    theme[key] = { ...(theme[key] || {}), background: quick.surface, text: quick.text, line: quick.line, font: quick.font };
+  });
+  ['logoText', 'sectionTitle', 'sectionDesc', 'subFilterLabel', 'tabTitle', 'specHeader', 'specLabel', 'specValue'].forEach((key) => {
+    theme[key] = { ...(theme[key] || {}), text: quick.text, font: quick.font };
+  });
+  ['headerActionButton', 'regularButton', 'mobileActionButton', 'tabButton', 'sceneTabButton', 'doorTabButton', 'handleTabButton', 'allTabButton', 'chipButton', 'navButton'].forEach((key) => {
+    theme[key] = { ...(theme[key] || {}), background: quick.button, text: '#ffffff', line: quick.button, font: quick.font };
+  });
+}
+
+function previewQuickThemeChange() {
+  quickThemePreviewEnabled = true;
+  sendAppearancePreview();
+}
+
+function applyQuickTheme() {
+  const quick = getQuickTheme();
+  const surfaceKeys = ['hero', 'stage', 'specCard', 'panel', 'navTabs', 'search', 'swatches', 'panelChips'];
+  const textKeys = ['logoText', 'sectionTitle', 'sectionDesc', 'subFilterLabel', 'tabTitle', 'specHeader', 'specLabel', 'specValue'];
+  const buttonKeys = ['headerActionButton', 'regularButton', 'mobileActionButton', 'tabButton', 'sceneTabButton', 'doorTabButton', 'handleTabButton', 'allTabButton', 'chipButton', 'navButton'];
+  setAppearanceField('bodyBackground', 'background', quick.page);
+  setAppearanceField('bodyBackground', 'text', quick.text);
+  setAppearanceField('bodyBackground', 'line', quick.line);
+  setAppearanceField('bodyFont', 'font', quick.font);
+  surfaceKeys.forEach((key) => {
+    setAppearanceField(key, 'background', quick.surface);
+    setAppearanceField(key, 'text', quick.text);
+    setAppearanceField(key, 'line', quick.line);
+    setAppearanceField(key, 'font', quick.font);
+  });
+  textKeys.forEach((key) => {
+    setAppearanceField(key, 'text', quick.text);
+    setAppearanceField(key, 'font', quick.font);
+  });
+  buttonKeys.forEach((key) => {
+    setAppearanceField(key, 'background', quick.button);
+    setAppearanceField(key, 'text', '#ffffff');
+    setAppearanceField(key, 'line', quick.button);
+    setAppearanceField(key, 'font', quick.font);
+  });
+  quickThemePreviewEnabled = false;
+  document.querySelectorAll('.appearance-card').forEach((card) => {
+    const key = card.dataset.appearanceKey;
+    if (key) updateAppearancePreview(`${key}-background`);
+  });
+  toast('ใช้สีหลักกับหน้า Visualizer แล้ว กดบันทึกเพื่อเผยแพร่', 'success');
+}
+
+function selectAppearancePoint(pointKey) {
+  const card = document.getElementById(`appearance-point-${pointKey}`);
+  if (!card) return;
+  document.querySelectorAll('.appearance-card.is-selected').forEach((item) => item.classList.remove('is-selected'));
+  card.classList.add('is-selected');
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const firstControl = card.querySelector('input[type="color"], input[type="text"], select');
+  firstControl?.focus({ preventScroll: true });
+  const status = document.getElementById('appearancePreviewStatus');
+  if (status) status.textContent = `กำลังแก้: ${APPEARANCE_POINTS.find((point) => point.key === pointKey)?.label || pointKey}`;
+  openAppearanceInlineEditor(pointKey);
+  sendAppearancePreview();
+}
+
+function bindAppearancePreviewInteractions() {
+  const frame = document.getElementById('appearanceLivePreview');
+  const previewDocument = frame?.contentDocument;
+  if (!frame || !previewDocument || frame.dataset.appearanceBound === 'true') return;
+  frame.dataset.appearanceBound = 'true';
+  previewDocument.addEventListener('click', (event) => {
+    const target = event.target && event.target.nodeType === 1 ? event.target : null;
+    if (!target) return;
+    const matches = APPEARANCE_POINTS.map((item, index) => {
+      const element = target.closest(item.selector);
+      if (!element) return null;
+      let distance = 0;
+      let current = target;
+      while (current && current !== element) {
+        distance += 1;
+        current = current.parentElement;
+      }
+      return { item, element, distance, index };
+    }).filter(Boolean);
+    const clickedButton = target.closest('button');
+    const buttonMatches = clickedButton
+      ? matches.filter((match) => match.element === clickedButton)
+      : [];
+    const selectedMatch = (buttonMatches.length ? buttonMatches : matches)
+      .sort((a, b) => a.distance - b.distance || b.index - a.index)[0];
+    const point = selectedMatch?.item;
+    if (!point || !selectedMatch.element) return;
+    event.preventDefault();
+    event.stopPropagation();
+    previewDocument.querySelectorAll('[data-appearance-selected="true"]').forEach((element) => {
+      element.removeAttribute('data-appearance-selected');
+      element.style.boxShadow = '';
+    });
+    const selectedElement = selectedMatch.element;
+    if (selectedElement) {
+      selectedElement.dataset.appearanceSelected = 'true';
+      const computedStyle = previewDocument.defaultView.getComputedStyle(selectedElement);
+      selectedElement.style.boxShadow = `0 0 0 3px #e5a93d`;
+      selectedElement.style.borderRadius = computedStyle.borderRadius;
+      selectedElement.style.outline = 'none';
+    }
+    selectAppearancePoint(point.key);
+  }, true);
+}
+
+function renderAppearanceSettings() {
+  const container = document.getElementById('appearanceSettingsList');
+  if (!container) return;
+  renderQuickThemeSections();
+  const fontOptions = [
+    ['inherit', 'ใช้ค่าหลักของเว็บไซต์'],
+    ["'Noto Sans Thai', sans-serif", 'Noto Sans Thai'],
+    ["'IBM Plex Sans Thai', sans-serif", 'IBM Plex Sans Thai'],
+    ["'Noto Serif Thai', serif", 'Noto Serif Thai'],
+    ['Tahoma, sans-serif', 'Tahoma'],
+    ['Arial, sans-serif', 'Arial'],
+    ['Georgia, serif', 'Georgia']
+  ];
+  const colorControl = (pointKey, field, label, fallback) => {
+    const id = `${pointKey}-${field}`;
+    return `<div class="form-group"><label>${label}</label><div class="appearance-color-control">
+      <input type="color" id="${id}" value="${fallback}" oninput="syncAppearanceColor('${id}')">
+      <input type="text" class="appearance-hex" id="${id}-hex" value="${fallback.toUpperCase()}" maxlength="7" oninput="syncAppearanceHex('${id}')">
+    </div></div>`;
+  };
+  const renderPointCard = (point, index) => {
+    const value = { ...APPEARANCE_DEFAULTS, ...(appearanceSettings[point.key] || {}) };
+    const isConfigured = !!appearanceSettings[point.key];
+    const isTextOnly = APPEARANCE_TEXT_ONLY_KEYS.includes(point.key);
+    const isButtonStyle = APPEARANCE_BUTTON_KEYS.includes(point.key);
+    const hasButtonControl = APPEARANCE_BUTTON_CONTROL_KEYS.includes(point.key);
+    const hasBorderControl = APPEARANCE_BORDER_CONTROL_KEYS.includes(point.key);
+    const hasTextControl = APPEARANCE_TEXT_CONTROL_KEYS.includes(point.key);
+    const hasBackgroundImageControl = APPEARANCE_BACKGROUND_IMAGE_KEYS.includes(point.key);
+    const background = value.background || '#ffffff';
+    const backgroundImage = value.backgroundImage || '';
+    const text = value.text || (point.key === 'specHeader' ? '#8c6d37' : point.key === 'specLabel' ? '#9e9384' : '#1a1714');
+    const line = value.line || '#e5dec3';
+    const button = value.button || value.background || '#c5a059';
+
+    if (isTextOnly) {
+      return `<article class="appearance-card" id="appearance-point-${point.key}" data-appearance-key="${point.key}">
+        <div class="appearance-card-head"><div class="appearance-card-title">${point.label}</div><div class="appearance-card-number">${String(index + 1).padStart(2, '0')}</div></div>
+        <div class="appearance-current"><span>${isConfigured ? 'กำหนดแล้ว:' : 'ยังไม่ได้กำหนด:'}</span><span class="appearance-current-preview" id="${point.key}-preview" style="background:${text};border-color:${line};"></span><span id="${point.key}-summary">${isConfigured ? `พื้นหลัง ${background.toUpperCase()} · ข้อความ ${text.toUpperCase()}` : 'ใช้ค่าเดิมของเว็บไซต์'}</span></div>
+        <div style="margin:-4px 0 12px; color: var(--text3); font-size: 11px; line-height: 1.6;">มีผลกับ: ${point.example || point.selector}</div>
+        <div class="appearance-example" id="${point.key}-example">${getAppearanceExampleHtml(point.key, { background, backgroundImage, text, line, button, font: value.font || "'IBM Plex Sans Thai', sans-serif" })}</div>
+        ${hasBackgroundImageControl ? `<div class="appearance-color-row">${colorControl(point.key, 'background', 'พื้นหลัง', background)}${colorControl(point.key, 'text', 'ข้อความ', text)}</div>` : `<div class="appearance-color-row">${colorControl(point.key, 'text', 'ข้อความ', text)}<div class="form-group"><label>ฟอนต์ตัวอักษร</label><select class="form-select" id="${point.key}-font" onchange="updateAppearancePreview('${point.key}-font')">${fontOptions.map(([key, label]) => `<option value="${key}" ${value.font === key ? 'selected' : ''}>${label}</option>`).join('')}</select></div></div>`}
+        ${hasBackgroundImageControl ? `<div class="appearance-color-row" style="margin-top:10px;">${hasBorderControl ? colorControl(point.key, 'line', 'ขอบ', line) : '<div></div>'}<div class="form-group"><label>ฟอนต์ตัวอักษร</label><select class="form-select" id="${point.key}-font" onchange="updateAppearancePreview('${point.key}-font')">${fontOptions.map(([key, label]) => `<option value="${key}" ${value.font === key ? 'selected' : ''}>${label}</option>`).join('')}</select></div></div>` : ''}
+      </article>`;
+    }
+
+    if (isButtonStyle) {
+      return `<article class="appearance-card" id="appearance-point-${point.key}" data-appearance-key="${point.key}">
+        <div class="appearance-card-head"><div class="appearance-card-title">${point.label}</div><div class="appearance-card-number">${String(index + 1).padStart(2, '0')}</div></div>
+        <div class="appearance-current"><span>${isConfigured ? 'กำหนดแล้ว:' : 'ยังไม่ได้กำหนด:'}</span><span class="appearance-current-preview" id="${point.key}-preview" style="background:${background};border-color:${line};"></span><span id="${point.key}-summary">${isConfigured ? `สีปุ่ม ${background.toUpperCase()} · ข้อความ ${text.toUpperCase()}` : 'ใช้ค่าเดิมของเว็บไซต์'}</span><span class="appearance-current-button" id="${point.key}-button-preview" style="background:${background};color:${text};border:1px solid ${line};">ตัวอย่างปุ่ม</span></div>
+        <div style="margin:-4px 0 12px; color: var(--text3); font-size: 11px; line-height: 1.6;">มีผลกับ: ${point.example || point.selector}</div>
+        <div class="appearance-example" id="${point.key}-example">${getAppearanceExampleHtml(point.key, { background, backgroundImage, text, line, button, font: value.font || "'IBM Plex Sans Thai', sans-serif" })}</div>
+        <div class="appearance-color-row">
+          ${colorControl(point.key, 'background', 'สีปุ่ม', background)}
+          ${colorControl(point.key, 'text', 'สีข้อความ', text)}
+        </div>
+        <div class="appearance-color-row" style="margin-top:10px;">
+          ${colorControl(point.key, 'line', 'สีขอบปุ่ม', line)}
+          <div class="form-group"><label>ฟอนต์ตัวอักษร</label><select class="form-select" id="${point.key}-font" onchange="updateAppearancePreview('${point.key}-font')">${fontOptions.map(([key, label]) => `<option value="${key}" ${value.font === key ? 'selected' : ''}>${label}</option>`).join('')}</select></div>
+        </div>
+      </article>`;
+    }
+
+    return `<article class="appearance-card" id="appearance-point-${point.key}" data-appearance-key="${point.key}">
+      <div class="appearance-card-head"><div class="appearance-card-title">${point.label}</div><div class="appearance-card-number">${String(index + 1).padStart(2, '0')}</div></div>
+      <div class="appearance-current"><span>${isConfigured ? 'กำหนดแล้ว:' : 'ยังไม่ได้กำหนด:'}</span><span class="appearance-current-preview" id="${point.key}-preview" style="background:${background};border-color:${line};${backgroundImage ? `background-image:url('${backgroundImage}');background-size:cover;background-position:center;` : ''}"></span><span id="${point.key}-summary">${isConfigured ? `${backgroundImage ? 'มีภาพพื้นหลัง' : `พื้นหลัง ${background.toUpperCase()}`} · ข้อความ ${text.toUpperCase()}` : 'ใช้ค่าเดิมของเว็บไซต์'}</span>${hasButtonControl ? `<span class="appearance-current-button" id="${point.key}-button-preview" style="background:${button};">ตัวอย่างปุ่ม</span>` : ''}</div>
+      <div style="margin:-4px 0 12px; color: var(--text3); font-size: 11px; line-height: 1.6;">มีผลกับ: ${point.example || point.selector}</div>
+      <div class="appearance-example" id="${point.key}-example">${getAppearanceExampleHtml(point.key, { background, backgroundImage, text, line, button, font: value.font || "'IBM Plex Sans Thai', sans-serif" })}</div>
+      <div class="appearance-color-row">
+        ${colorControl(point.key, 'background', 'พื้นหลัง', background)}
+        ${hasTextControl ? colorControl(point.key, 'text', 'ข้อความ', text) : `<div class="form-group"><label>ฟอนต์ตัวอักษร</label><select class="form-select" id="${point.key}-font" onchange="updateAppearancePreview('${point.key}-font')">${fontOptions.map(([key, label]) => `<option value="${key}" ${value.font === key ? 'selected' : ''}>${label}</option>`).join('')}</select></div>`}
+      </div>
+      ${hasBackgroundImageControl ? `<div class="form-group" style="margin-top:10px;"><label>ภาพพื้นหลัง (URL หรืออัปโหลดไฟล์)</label><input type="url" class="form-input" id="${point.key}-background-image" value="${backgroundImage}" placeholder="https://.../background.jpg" oninput="updateAppearancePreview('${point.key}-background')"><input type="file" class="form-input" accept="image/*" style="margin-top:7px;" onchange="uploadAppearanceBackground(this, '${point.key}')"></div>` : ''}
+      <div class="appearance-color-row" style="margin-top:10px;">
+        ${colorControl(point.key, 'line', 'เส้น/ขอบ', line)}
+        ${hasButtonControl ? colorControl(point.key, 'button', 'ปุ่ม', button) : hasTextControl ? `<div class="form-group"><label>ฟอนต์</label><select class="form-select" id="${point.key}-font" onchange="updateAppearancePreview('${point.key}-font')">${fontOptions.map(([key, label]) => `<option value="${key}" ${value.font === key ? 'selected' : ''}>${label}</option>`).join('')}</select></div>` : '<div></div>'}
+      </div>
+      ${hasButtonControl ? `<div class="form-group appearance-font"><label>ฟอนต์</label><select class="form-select" id="${point.key}-font" onchange="updateAppearancePreview('${point.key}-font')">${fontOptions.map(([key, label]) => `<option value="${key}" ${value.font === key ? 'selected' : ''}>${label}</option>`).join('')}</select></div>` : ''}
+    </article>`;
+  };
+  const guideHtml = `<div class="appearance-guide">
+    <div class="appearance-guide-title">วิธีใช้งานแบบเข้าใจง่าย</div>
+    <div class="appearance-guide-text">เลือกพื้นที่ด้านล่างเพื่อเลื่อนไปยังจุดที่ต้องการแก้ จากนั้นดูภาพตัวอย่างและปรับค่าในช่องสีได้เลย การเปลี่ยนแปลงจะมีผลกับหน้า index.html หลังจากกดบันทึก</div>
+    <div class="appearance-guide-map">${APPEARANCE_GROUPS.map((group) => `<button type="button" class="appearance-map-btn" onclick="scrollToAppearanceGroup('${group.key}')"><span>${group.title}</span><small>${group.description}</small></button>`).join('')}</div>
+    <div class="appearance-guide-grid">
+      <div class="appearance-guide-chip"><strong>แถบบน</strong>ใช้กับโลโก้และปุ่มคัดลอกสเปก/ดาวน์โหลด</div>
+      <div class="appearance-guide-chip"><strong>ฝั่งซ้าย</strong>ใช้กับภาพตัวอย่างและกล่องสรุปอุปกรณ์</div>
+      <div class="appearance-guide-chip"><strong>ฝั่งขวา</strong>ใช้กับแท็บ ฉากห้อง / บานประตู / มือจับ / แสดงทั้งหมด และรายการสินค้า</div>
+    </div>
+  </div>`;
+  const sectionsHtml = APPEARANCE_GROUPS.map((group) => {
+    const points = APPEARANCE_POINTS.filter((point) => point.group === group.key);
+    if (!points.length) return '';
+    return `<section class="appearance-section" id="appearance-group-${group.key}">
+      <div class="appearance-section-head">
+        <div>
+          <div class="appearance-section-title">${group.title}</div>
+          <div class="appearance-section-desc">${group.description}</div>
+        </div>
+        <div class="appearance-section-count">${String(points.length).padStart(2, '0')} items</div>
+      </div>
+      <div class="appearance-grid">${points.map((point, index) => renderPointCard(point, APPEARANCE_POINTS.indexOf(point) + 1)).join('')}</div>
+    </section>`;
+  }).join('');
+  container.innerHTML = guideHtml + sectionsHtml;
+  sendAppearancePreview();
+}
+
+function syncAppearanceColor(id) {
+  const color = document.getElementById(id);
+  const hex = document.getElementById(`${id}-hex`);
+  if (color && hex) hex.value = color.value.toUpperCase();
+  updateAppearancePreview(id);
+}
+
+function scrollToAppearanceGroup(groupKey) {
+  document.getElementById(`appearance-group-${groupKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function openAppearanceInlineEditor(pointKey) {
+  const point = APPEARANCE_POINTS.find((item) => item.key === pointKey);
+  const editor = document.getElementById('appearanceInlineEditor');
+  if (!point || !editor) return;
+
+  const config = getAppearancePreviewConfig(pointKey);
+  inlineAppearancePointKey = pointKey;
+  document.getElementById('appearanceInlineEditorTitle').textContent = `กำลังแก้ไข: ${point.label}`;
+  const hasTextControl = APPEARANCE_TEXT_CONTROL_KEYS.includes(pointKey) || APPEARANCE_TEXT_ONLY_KEYS.includes(pointKey);
+  const hasBackgroundControl = !APPEARANCE_TEXT_ONLY_KEYS.includes(pointKey);
+  const hasButtonControl = APPEARANCE_BUTTON_CONTROL_KEYS.includes(pointKey);
+  const hasBorderControl = APPEARANCE_BORDER_CONTROL_KEYS.includes(pointKey);
+  const hasFontControl = APPEARANCE_FONT_CONTROL_KEYS.includes(pointKey);
+  document.querySelector('.appearance-inline-background').style.display = hasBackgroundControl ? '' : 'none';
+  document.querySelector('.appearance-inline-line').style.display = hasBorderControl ? '' : 'none';
+  document.querySelector('.appearance-inline-button').style.display = hasButtonControl ? '' : 'none';
+  document.querySelector('.appearance-inline-text').style.display = hasTextControl ? '' : 'none';
+  document.getElementById('inlineAppearanceFontField').style.display = hasFontControl ? '' : 'none';
+  ['background', 'text', 'line', 'button'].forEach((field) => {
+    const value = config[field];
+    const inputId = `inlineAppearance${field[0].toUpperCase()}${field.slice(1)}`;
+    const input = document.getElementById(inputId);
+    if (input) input.value = /^#[0-9a-f]{6}$/i.test(value) ? value : '#ffffff';
+  });
+
+  const fontOptions = [
+    ['inherit', 'ใช้ค่าหลักของเว็บไซต์'],
+    ["'Noto Sans Thai', sans-serif", 'Noto Sans Thai'],
+    ["'IBM Plex Sans Thai', sans-serif", 'IBM Plex Sans Thai'],
+    ["'Noto Serif Thai', serif", 'Noto Serif Thai'],
+    ['Tahoma, sans-serif', 'Tahoma'],
+    ['Arial, sans-serif', 'Arial']
+  ];
+  const fontSelect = document.getElementById('inlineAppearanceFont');
+  if (fontSelect) {
+    fontSelect.innerHTML = fontOptions.map(([value, label]) => `<option value="${value}" ${config.font === value ? 'selected' : ''}>${label}</option>`).join('');
+  }
+  editor.classList.add('open');
+}
+
+function closeAppearanceInlineEditor() {
+  inlineAppearancePointKey = '';
+  document.getElementById('appearanceInlineEditor')?.classList.remove('open');
+}
+
+function updateAppearanceInlineEditor(field, value) {
+  if (!inlineAppearancePointKey) return;
+  setAppearanceField(inlineAppearancePointKey, field, value);
+  updateAppearancePreview(`${inlineAppearancePointKey}-${field}`);
+}
+
+function setAppearanceField(pointKey, field, value) {
+  const input = document.getElementById(`${pointKey}-${field}`);
+  if (!input) return;
+  input.value = value;
+  if (input.type === 'color') syncAppearanceColor(input.id);
+}
+
+function applyAppearancePreset(presetKey) {
+  const palette = presetKey === 'clean'
+    ? { hero: '#ffffff', surface: '#ffffff', panel: '#ffffff', button: '#1f6f8b', text: '#17324d', line: '#c8d8e2', body: '#eef4f7' }
+    : { hero: '#2c261f', surface: '#fffaf2', panel: '#fffdf8', button: '#b47728', text: '#2c261f', line: '#d8c39d', body: '#f4eee5' };
+
+  setAppearanceField('hero', 'background', palette.hero);
+  setAppearanceField('stage', 'background', palette.surface);
+  setAppearanceField('specCard', 'background', palette.surface);
+  setAppearanceField('panel', 'background', palette.panel);
+  setAppearanceField('bodyBackground', 'background', palette.body);
+  ['headerActionButton', 'regularButton', 'mobileActionButton', 'tabButton', 'sceneTabButton', 'doorTabButton', 'handleTabButton', 'allTabButton', 'chipButton', 'navButton'].forEach((key) => {
+    setAppearanceField(key, 'background', palette.button);
+    setAppearanceField(key, 'text', '#ffffff');
+    setAppearanceField(key, 'line', palette.button);
+  });
+  ['logoText', 'sectionTitle', 'sectionDesc', 'subFilterLabel', 'tabTitle', 'specHeader', 'specLabel', 'specValue'].forEach((key) => setAppearanceField(key, 'text', palette.text));
+  ['hero', 'stage', 'specCard', 'panel', 'bodyBackground'].forEach((key) => {
+    setAppearanceField(key, 'text', palette.text);
+    setAppearanceField(key, 'line', palette.line);
+  });
+  document.querySelectorAll('.appearance-card').forEach((card) => {
+    const key = card.dataset.appearanceKey;
+    if (key) updateAppearancePreview(`${key}-background`);
+  });
+  sendAppearancePreview();
+  toast('ใช้ชุดสีตัวอย่างแล้ว กดบันทึกเพื่อเผยแพร่', 'info');
+}
+
+function resetAppearanceForm() {
+  appearanceSettings = {};
+  renderAppearanceSettings();
+  toast('คืนค่าแบบฟอร์มเป็นค่าเดิมของเว็บไซต์แล้ว', 'info');
+}
+
+function syncAppearanceHex(id) {
+  const color = document.getElementById(id);
+  const hex = document.getElementById(`${id}-hex`);
+  if (!color || !hex) return;
+  const normalized = hex.value.trim();
+  if (/^#[0-9a-f]{6}$/i.test(normalized)) {
+    color.value = normalized;
+    updateAppearancePreview(id);
+  }
+}
+
+function updateAppearancePreview(id) {
+  const pointKey = id.split('-')[0];
+  const isTextOnly = ['logoText', 'sectionTitle', 'sectionDesc', 'subFilterLabel', 'tabTitle', 'specHeader', 'specLabel', 'specValue'].includes(pointKey);
+  const isButtonStyle = ['headerActionButton', 'regularButton', 'mobileActionButton', 'tabButton', 'sceneTabButton', 'doorTabButton', 'handleTabButton', 'allTabButton', 'chipButton', 'navButton'].includes(pointKey);
+  const background = document.getElementById(`${pointKey}-background`)?.value || '#ffffff';
+  const text = document.getElementById(`${pointKey}-text`)?.value || '#1a1714';
+  const line = document.getElementById(`${pointKey}-line`)?.value || '#e5dec3';
+  const button = document.getElementById(`${pointKey}-button`)?.value || '#c5a059';
+  const backgroundImage = document.getElementById(`${pointKey}-background-image`)?.value.trim() || '';
+  const preview = document.getElementById(`${pointKey}-preview`);
+  const summary = document.getElementById(`${pointKey}-summary`);
+  const buttonPreview = document.getElementById(`${pointKey}-button-preview`);
+  const example = document.getElementById(`${pointKey}-example`);
+
+  if (preview) {
+    if (isTextOnly) {
+      preview.style.background = background;
+      preview.style.borderColor = line;
+      preview.style.backgroundImage = backgroundImage ? `url("${backgroundImage}")` : 'none';
+      preview.style.backgroundSize = backgroundImage ? 'cover' : '';
+      preview.style.backgroundPosition = backgroundImage ? 'center' : '';
+    } else if (isButtonStyle) {
+      preview.style.background = background;
+      preview.style.borderColor = line;
+      preview.style.backgroundImage = 'none';
+    } else {
+      preview.style.background = background;
+      preview.style.borderColor = line;
+      preview.style.backgroundImage = backgroundImage ? `url("${backgroundImage}")` : 'none';
+      preview.style.backgroundSize = backgroundImage ? 'cover' : '';
+      preview.style.backgroundPosition = backgroundImage ? 'center' : '';
+    }
+  }
+  if (summary) {
+    summary.textContent = isTextOnly
+      ? `${backgroundImage ? 'มีภาพพื้นหลัง' : `พื้นหลัง ${background.toUpperCase()}`} · ข้อความ ${text.toUpperCase()}`
+      : isButtonStyle
+        ? `สีปุ่ม ${background.toUpperCase()} · ข้อความ ${text.toUpperCase()}`
+      : `${backgroundImage ? 'มีภาพพื้นหลัง' : `พื้นหลัง ${background.toUpperCase()}`} · ข้อความ ${text.toUpperCase()}`;
+  }
+  if (buttonPreview) {
+    buttonPreview.style.background = isButtonStyle ? background : button;
+    if (isButtonStyle) {
+      buttonPreview.style.color = text;
+      buttonPreview.style.border = `1px solid ${line}`;
+    }
+  }
+  if (example) {
+    example.innerHTML = getAppearanceExampleHtml(pointKey, {
+      background,
+      backgroundImage,
+      text,
+      line,
+      button,
+      font: document.getElementById(`${pointKey}-font`)?.value || "'IBM Plex Sans Thai', sans-serif"
+    });
+  }
+  sendAppearancePreview();
+}
+
+async function uploadAppearanceBackground(fileInput, pointKey) {
+  const file = fileInput.files?.[0];
+  if (!file) return;
+  try {
+    toast('กำลังอัปโหลดภาพพื้นหลัง...', 'info');
+    const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '')}`;
+    const filePath = `appearance/${pointKey}/${safeName}`;
+    const { error } = await sb.storage.from('door-scenes').upload(filePath, file, { upsert: true });
+    if (error) throw error;
+    const { data } = sb.storage.from('door-scenes').getPublicUrl(filePath);
+    const input = document.getElementById(`${pointKey}-background-image`);
+    if (input && data?.publicUrl) input.value = data.publicUrl;
+    updateAppearancePreview(`${pointKey}-background`);
+    toast('อัปโหลดภาพพื้นหลังสำเร็จ กดบันทึกการตั้งค่าเพื่อยืนยัน', 'success');
+  } catch (error) {
+    toast('อัปโหลดภาพพื้นหลังไม่สำเร็จ: ' + (error.message || ''), 'error');
+  } finally {
+    fileInput.value = '';
+  }
+}
+
+async function loadAppearanceSettings() {
+  try {
+    const { data, error } = await sb.from('site_settings').select('setting_value').eq('setting_key', 'visualizer_theme').maybeSingle();
+    if (error) throw error;
+    try { appearanceSettings = data?.setting_value ? JSON.parse(data.setting_value) : {}; } catch (_error) { appearanceSettings = {}; }
+  } catch (_error) {
+    appearanceSettings = JSON.parse(localStorage.getItem('cgaVisualizerTheme') || '{}');
+  }
+  renderAppearanceSettings();
+}
+
+async function saveAppearanceSettings() {
+  const nextSettings = getAppearanceSettingsFromForm();
+  const settingValue = JSON.stringify(nextSettings);
+  try {
+    const { error } = await sb.from('site_settings').upsert({
+      setting_key: 'visualizer_theme', setting_value: settingValue, updated_at: new Date().toISOString()
+    }, { onConflict: 'setting_key' });
+    if (error) throw error;
+    localStorage.setItem('cgaVisualizerTheme', settingValue);
+    appearanceSettings = nextSettings;
+    const exportFieldsAvailable = document.getElementById('exportWidthInput');
+    if (exportFieldsAvailable) {
+      const nextExportSettings = getExportAppearanceSettingsFromForm();
+      const exportValue = JSON.stringify(nextExportSettings);
+      const exportResult = await sb.from('site_settings').upsert({
+        setting_key: 'visualizer_export', setting_value: exportValue, updated_at: new Date().toISOString()
+      }, { onConflict: 'setting_key' });
+      if (exportResult.error) throw exportResult.error;
+      localStorage.setItem('cgaVisualizerExport', exportValue);
+      exportAppearanceSettings = nextExportSettings;
+    }
+    toast('บันทึกการตั้งค่ารูปลักษณ์ทั้งหมดสำเร็จ', 'success');
+  } catch (error) {
+    localStorage.setItem('cgaVisualizerTheme', settingValue);
+    toast('บันทึกลงฐานข้อมูลไม่สำเร็จ แต่เก็บค่าไว้ในเครื่องแล้ว: ' + (error.message || ''), 'amber');
+  }
+}
+
+function renderExportAppearanceSettings() {
+  const settings = { ...EXPORT_APPEARANCE_DEFAULTS, ...exportAppearanceSettings };
+  const fields = {
+    width: 'exportWidthInput', height: 'exportHeightInput', background: 'exportBackgroundInput',
+    shellBackground: 'exportShellBackgroundInput', shellBorder: 'exportShellBorderInput',
+    specBackground: 'exportSpecBackgroundInput', specBorder: 'exportSpecBorderInput', cardBackground: 'exportCardBackgroundInput',
+    cardBorder: 'exportCardBorderInput', headingColor: 'exportHeadingColorInput',
+    labelColor: 'exportLabelColorInput', valueColor: 'exportValueColorInput',
+    accentColor: 'exportAccentColorInput', noteColor: 'exportNoteColorInput', fontFamily: 'exportFontFamilyInput'
+  };
+  Object.entries(fields).forEach(([key, id]) => {
+    const input = document.getElementById(id);
+    if (input) input.value = settings[key];
+    const hexInput = document.getElementById(`${id}Hex`);
+    if (hexInput) hexInput.value = String(settings[key]).toUpperCase();
+  });
+  const imageInput = document.getElementById('exportBackgroundImageInput');
+  const imagePreview = document.getElementById('exportBackgroundImagePreview');
+  if (imageInput) imageInput.value = settings.backgroundImage || '';
+  if (imagePreview) {
+    imagePreview.src = settings.backgroundImage || '';
+    imagePreview.style.display = settings.backgroundImage ? 'block' : 'none';
+  }
+  updateExportPreview();
+}
+
+function updateExportPreview() {
+  const read = (id, fallback) => document.getElementById(id)?.value || fallback;
+  const width = Math.max(600, Number(read('exportWidthInput', 1200)) || 1200);
+  const height = Math.max(400, Number(read('exportHeightInput', 760)) || 760);
+  const stage = document.getElementById('exportPreviewStage');
+  const meta = document.getElementById('exportPreviewMeta');
+  if (!stage || !meta) return;
+
+  const background = read('exportBackgroundInput', '#FAF8F5');
+  const backgroundImage = read('exportBackgroundImageInput', '');
+
+  stage.style.background = background;
+  stage.style.backgroundImage = backgroundImage ? `url("${backgroundImage.replace(/"/g, '%22')}")` : 'none';
+  stage.style.backgroundSize = backgroundImage ? 'cover' : '';
+  stage.style.backgroundPosition = backgroundImage ? 'center' : '';
+  stage.style.width = '100%';
+  stage.style.height = 'auto';
+  stage.style.minWidth = '0';
+  stage.style.minHeight = '0';
+  stage.style.aspectRatio = `${width} / ${height}`;
+  meta.textContent = `${width} x ${height} px · ตัวอย่างสัดส่วนตามไฟล์จริง`;
+  refreshExportPreviewAssets();
+}
+
+async function refreshExportPreviewStageImage() {
+  const token = ++exportPreviewAssetToken;
+  const imageEl = document.getElementById('exportPreviewRenderedImage');
+  const placeholderEl = document.getElementById('exportPreviewImagePlaceholder');
+  const frame = document.getElementById('appearanceLivePreview');
+  if (!imageEl || !placeholderEl) return;
+
+  placeholderEl.textContent = 'กำลังโหลดภาพตัวอย่างจริง...';
+  placeholderEl.style.display = 'flex';
+  imageEl.style.display = 'none';
+
+  try {
+    const frameWindow = frame?.contentWindow;
+    sendExportPreviewSettingsToFrame(frameWindow);
+    frameWindow?.postMessage({ type: 'cga-sync-selection-state' }, window.location.origin);
+
+    const relayoutStage = frameWindow?.layoutDoor;
+    if (typeof relayoutStage === 'function') await relayoutStage();
+
+    const waitForAssets = frameWindow?.waitForStageAssetsReady;
+    if (typeof waitForAssets === 'function') await waitForAssets(1800);
+
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    const renderStage = frameWindow?.renderStageToCanvas;
+    const compositeExport = frameWindow?.compositeExportCanvas;
+    if (typeof renderStage !== 'function' || typeof compositeExport !== 'function') throw new Error('Export renderer unavailable');
+
+    const stageCanvas = await renderStage();
+    if (token !== exportPreviewAssetToken) return;
+    const exportCanvas = await compositeExport(stageCanvas);
+    if (token !== exportPreviewAssetToken || !exportCanvas) return;
+
+    imageEl.src = exportCanvas.toDataURL('image/png');
+    imageEl.style.display = 'block';
+    placeholderEl.style.display = 'none';
+  } catch (_error) {
+    if (token !== exportPreviewAssetToken) return;
+    imageEl.src = '';
+    imageEl.style.display = 'none';
+    placeholderEl.style.display = 'flex';
+    placeholderEl.textContent = 'ยังโหลดภาพตัวอย่างจริงไม่ได้';
+  }
+}
+
+function refreshExportPreviewAssets() {
+  refreshExportPreviewStageImage();
+}
+
+function sendExportPreviewSettingsToFrame(frameWindow) {
+  if (!frameWindow) return;
+  frameWindow.postMessage({
+    type: 'cga-export-preview-settings',
+    settings: getExportAppearanceSettingsFromForm()
+  }, window.location.origin);
+}
+
+function syncExportColor(id) {
+  const colorInput = document.getElementById(id);
+  const hexInput = document.getElementById(`${id}Hex`);
+  if (colorInput && hexInput) hexInput.value = colorInput.value.toUpperCase();
+  updateExportPreview();
+}
+
+function syncExportHex(id) {
+  const colorInput = document.getElementById(id);
+  const hexInput = document.getElementById(`${id}Hex`);
+  let value = hexInput?.value.trim() || '';
+  if (/^[0-9a-f]{6}$/i.test(value)) {
+    value = `#${value}`;
+    if (hexInput) hexInput.value = value.toUpperCase();
+  }
+  if (colorInput && /^#[0-9a-f]{6}$/i.test(value)) colorInput.value = value;
+  updateExportPreview();
+}
+
+function getExportAppearanceSettingsFromForm() {
+  const read = (id, fallback) => document.getElementById(id)?.value || fallback;
+  return {
+    width: Math.max(600, Math.min(3000, Number(read('exportWidthInput')) || EXPORT_APPEARANCE_DEFAULTS.width)),
+    height: Math.max(400, Math.min(3000, Number(read('exportHeightInput')) || EXPORT_APPEARANCE_DEFAULTS.height)),
+    background: read('exportBackgroundInput', EXPORT_APPEARANCE_DEFAULTS.background),
+    shellBackground: read('exportShellBackgroundInput', EXPORT_APPEARANCE_DEFAULTS.shellBackground),
+    shellBorder: read('exportShellBorderInput', EXPORT_APPEARANCE_DEFAULTS.shellBorder),
+    specBackground: read('exportSpecBackgroundInput', EXPORT_APPEARANCE_DEFAULTS.specBackground),
+    specBorder: read('exportSpecBorderInput', EXPORT_APPEARANCE_DEFAULTS.specBorder),
+    cardBackground: read('exportCardBackgroundInput', EXPORT_APPEARANCE_DEFAULTS.cardBackground),
+    cardBorder: read('exportCardBorderInput', EXPORT_APPEARANCE_DEFAULTS.cardBorder),
+    headingColor: read('exportHeadingColorInput', EXPORT_APPEARANCE_DEFAULTS.headingColor),
+    labelColor: read('exportLabelColorInput', EXPORT_APPEARANCE_DEFAULTS.labelColor),
+    valueColor: read('exportValueColorInput', EXPORT_APPEARANCE_DEFAULTS.valueColor),
+    accentColor: read('exportAccentColorInput', EXPORT_APPEARANCE_DEFAULTS.accentColor),
+    noteColor: read('exportNoteColorInput', EXPORT_APPEARANCE_DEFAULTS.noteColor),
+    fontFamily: read('exportFontFamilyInput', EXPORT_APPEARANCE_DEFAULTS.fontFamily),
+    backgroundImage: read('exportBackgroundImageInput', '')
+  };
+}
+
+async function uploadExportBackground(fileInput) {
+  const file = fileInput.files?.[0];
+  if (!file) return;
+  try {
+    toast('กำลังอัปโหลดภาพพื้นหลัง...', 'info');
+    const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '')}`;
+    const filePath = `appearance/export/${safeName}`;
+    const { error } = await sb.storage.from('door-scenes').upload(filePath, file, { upsert: true });
+    if (error) throw error;
+    const { data } = sb.storage.from('door-scenes').getPublicUrl(filePath);
+    const imageInput = document.getElementById('exportBackgroundImageInput');
+    const imagePreview = document.getElementById('exportBackgroundImagePreview');
+    if (imageInput && data?.publicUrl) imageInput.value = data.publicUrl;
+    if (imagePreview && data?.publicUrl) {
+      imagePreview.src = data.publicUrl;
+      imagePreview.style.display = 'block';
+    }
+    updateExportPreview();
+    toast('อัปโหลดภาพสำเร็จ กดบันทึกรูปแบบไฟล์ดาวน์โหลดเพื่อยืนยัน', 'success');
+  } catch (error) {
+    toast('อัปโหลดภาพไม่สำเร็จ: ' + (error.message || ''), 'error');
+  } finally {
+    fileInput.value = '';
+  }
+}
+
+async function loadExportAppearanceSettings() {
+  try {
+    const { data, error } = await sb.from('site_settings').select('setting_value').eq('setting_key', 'visualizer_export').maybeSingle();
+    if (error) throw error;
+    exportAppearanceSettings = data?.setting_value ? JSON.parse(data.setting_value) : {};
+  } catch (_error) {
+    try { exportAppearanceSettings = JSON.parse(localStorage.getItem('cgaVisualizerExport') || '{}'); } catch (_parseError) { exportAppearanceSettings = {}; }
+  }
+  renderExportAppearanceSettings();
+}
+
+async function saveExportAppearanceSettings() {
+  const nextSettings = getExportAppearanceSettingsFromForm();
+  const settingValue = JSON.stringify(nextSettings);
+  try {
+    const { error } = await sb.from('site_settings').upsert({
+      setting_key: 'visualizer_export', setting_value: settingValue, updated_at: new Date().toISOString()
+    }, { onConflict: 'setting_key' });
+    if (error) throw error;
+    localStorage.setItem('cgaVisualizerExport', settingValue);
+    exportAppearanceSettings = nextSettings;
+    toast('บันทึกรูปแบบไฟล์ดาวน์โหลดสำเร็จ', 'success');
+  } catch (error) {
+    localStorage.setItem('cgaVisualizerExport', settingValue);
+    toast('บันทึกลงฐานข้อมูลไม่สำเร็จ แต่เก็บค่าไว้ในเครื่องแล้ว: ' + (error.message || ''), 'amber');
+  }
+}
+
+async function handleLoginSubmit(event) {
+  event.preventDefault();
+
+  const email = document.getElementById('loginEmailInput').value.trim();
+  const password = document.getElementById('loginPasswordInput').value;
+  const submitBtn = document.getElementById('loginSubmitBtn');
+
+  clearAuthError();
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'กำลังเข้าสู่ระบบ...';
+
+  try {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    document.getElementById('loginPasswordInput').value = '';
+    toast('เข้าสู่ระบบสำเร็จ', 'success');
+  } catch (error) {
+    setAuthError(error.message || 'เข้าสู่ระบบไม่สำเร็จ');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'เข้าสู่ระบบ';
+  }
+}
+
+async function handleLogout() {
+  const { error } = await sb.auth.signOut();
+  if (error) {
+    toast('ออกจากระบบไม่สำเร็จ: ' + (error.message || 'เกิดข้อผิดพลาด'), 'error');
+    return;
+  }
+  toast('ออกจากระบบแล้ว', 'success');
+}
+
+function setAuthError(message) {
+  const box = document.getElementById('authErrorBox');
+  if (!box) return;
+  box.textContent = message || '';
+  box.classList.toggle('open', !!message);
+}
+
+function clearAuthError() {
+  setAuthError('');
+}
+
+// Master Tab Switcher
+function switchMasterTab(tabKey) {
+  activeTab = tabKey;
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  
+  const targetTab = document.querySelector(`.nav-tab[onclick*="'${tabKey}'"]`);
+  if (targetTab) targetTab.classList.add('active');
+  
+  const targetPane = document.getElementById(`pane-${tabKey}`);
+  if (targetPane) targetPane.classList.add('active');
+
+  if (tabKey === 'export') {
+    updateExportPreview();
+  }
+}
+
+// -- Image Upload Handling -------------------------------------
+async function handleImagePick(fileEl, previewBoxId, pathInputId) {
+  const file = fileEl.files[0];
+  if(!file) return;
+  
+  const previewBox = document.getElementById(previewBoxId);
+  const previewImg = previewBox.querySelector('img');
+  previewImg.src = URL.createObjectURL(file);
+  previewBox.style.display = 'flex';
+  
+  // Direct upload to Supabase bucket 'door-scenes'
+  toast('กำลังอัปโหลดไฟล์ไปยัง Supabase Storage...', 'info');
+  try {
+    const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '')}`;
+    const folder = activeTab === 'scenes' ? 'rooms' : activeTab === 'doors' ? 'doors' : 'handles';
+    const filePath = `${folder}/${fileName}`;
+
+    const { data, error } = await sb.storage.from('door-scenes').upload(filePath, file, { upsert: true });
+    if(error) throw error;
+
+    const { data: urlData } = sb.storage.from('door-scenes').getPublicUrl(filePath);
+    const publicUrl = urlData.publicUrl;
+
+    document.getElementById(pathInputId).value = publicUrl;
+    toast('อัปโหลดรูปภาพสำเร็จ', 'success');
+  } catch(e) {
+    toast('อัปโหลดไม่สำเร็จ กรุณาตรวจสอบสิทธิ์หรือ URL: ' + e.message, 'error');
+  }
+}
+
+async function uploadWebsiteLogoToSupabaseStorage(file) {
+  if (!file) throw new Error('กรุณาเลือกไฟล์โลโก้');
+
+  const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '')}`;
+  const filePath = `website-logo/${safeName}`;
+  const { error } = await sb.storage.from('website-logo').upload(filePath, file, { upsert: true });
+  if (error) throw error;
+
+  const { data } = sb.storage.from('website-logo').getPublicUrl(filePath);
+  if (!data?.publicUrl) throw new Error('ไม่สามารถสร้าง URL โลโก้ได้');
+  return data.publicUrl;
+}
+
+async function loadWebsiteLogoSetting() {
+  try {
+    const { data, error } = await sb
+      .from('site_settings')
+      .select('setting_key, setting_value')
+      .eq('setting_key', 'website_logo')
+      .maybeSingle();
+
+    if (error) throw error;
+
+    const rawValue = data?.setting_value || '';
+    const currentValue = /^data:/i.test(rawValue) ? '' : rawValue;
+    const urlInput = document.getElementById('websiteLogoUrlInput');
+    if (urlInput) urlInput.value = currentValue;
+
+    const previewBox = document.getElementById('websiteLogoPreviewBox');
+    const previewImg = document.getElementById('websiteLogoPreviewImg');
+    if (currentValue && previewImg) {
+      previewImg.src = currentValue;
+      previewBox.style.display = 'flex';
+    } else if (previewBox) {
+      previewBox.style.display = 'none';
+    }
+
+    if (currentValue) {
+      localStorage.removeItem('cgaWebsiteLogo');
+      localStorage.setItem('cgaWebsiteLogo', currentValue);
+    } else {
+      localStorage.removeItem('cgaWebsiteLogo');
+    }
+  } catch (err) {
+    toast('โหลดโลโก้จากฐานข้อมูลไม่สำเร็จ: ' + (err.message || 'เกิดข้อผิดพลาด'), 'error');
+  }
+}
+
+function normalizeWebsiteLogoUrl(value) {
+  if (!value || typeof value !== 'string') return '';
+  const candidate = value.trim();
+  if (!candidate) return '';
+  if (/^data:/i.test(candidate)) {
+    throw new Error('URL โลโก้ไม่ถูกต้อง: ใช้ Supabase Storage public URL เท่านั้น ไม่ใช่ Base64 data URL');
+  }
+  if (!/^https?:\/\//i.test(candidate)) {
+    throw new Error('URL โลโก้ต้องขึ้นต้นด้วย http:// หรือ https://');
+  }
+  return candidate;
+}
+
+async function saveWebsiteLogoSetting() {
+  const urlInput = document.getElementById('websiteLogoUrlInput');
+  let logoUrl = '';
+
+  try {
+    logoUrl = normalizeWebsiteLogoUrl(urlInput?.value || '');
+  } catch (err) {
+    toast(err.message || 'กรุณาใส่ URL โลโก้ก่อนบันทึก', 'error');
+    return;
+  }
+
+  if (!logoUrl) {
+    toast('กรุณาใส่ URL โลโก้ก่อนบันทึก', 'error');
+    return;
+  }
+
+  try {
+    const { error } = await sb
+      .from('site_settings')
+      .upsert(
+        {
+          setting_key: 'website_logo',
+          setting_value: logoUrl,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'setting_key' }
+      );
+
+    if (error) throw error;
+
+    localStorage.removeItem('cgaWebsiteLogo');
+    localStorage.setItem('cgaWebsiteLogo', logoUrl);
+    toast('บันทึกโลโก้เว็บไซต์ลง Supabase สำเร็จ', 'success');
+  } catch (err) {
+    toast('บันทึกโลโก้เว็บไซต์ไม่สำเร็จ: ' + (err.message || 'เกิดข้อผิดพลาด'), 'error');
+  }
+}
+
+async function handleWebsiteLogoFileSelection(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const previewBox = document.getElementById('websiteLogoPreviewBox');
+  const previewImg = document.getElementById('websiteLogoPreviewImg');
+  if (previewImg) previewImg.src = URL.createObjectURL(file);
+  if (previewBox) previewBox.style.display = 'flex';
+
+  try {
+    toast('กำลังอัปโหลดโลโก้ไปยัง Supabase Storage...', 'info');
+    const publicUrl = await uploadWebsiteLogoToSupabaseStorage(file);
+    const urlInput = document.getElementById('websiteLogoUrlInput');
+    if (urlInput) urlInput.value = publicUrl;
+    toast('อัปโหลดโลโก้สำเร็จและพร้อมบันทึก URL แล้ว', 'success');
+  } catch (err) {
+    toast('อัปโหลดโลโก้ไม่สำเร็จ: ' + (err.message || 'เกิดข้อผิดพลาด'), 'error');
+  }
+}
+
+// -- 1. SKUs CRUD ---------------------------------------------
+async function loadSkus() {
+  try {
+    const { data, error } = await sb.from('door_skus').select('*').order('created_at', { ascending: false });
+    if(error) throw error;
+    rawSkus = data || [];
+    renderSkus(rawSkus);
+  } catch(e) { showEmpty('skuTbody', e.message); }
+}
+function renderSkus(rows) {
+  const skuBadge = document.getElementById('tabBadgeSkus');
+  const skuTotal = document.getElementById('skuStatTotal');
+  const skuActive = document.getElementById('skuStatActive');
+  const skuInactive = document.getElementById('skuStatInactive');
+  if (skuBadge) skuBadge.textContent = rows.length;
+  if (skuTotal) skuTotal.textContent = rows.length;
+  if (skuActive) skuActive.textContent = rows.filter(r=>r.is_active).length;
+  if (skuInactive) skuInactive.textContent = rows.filter(r=>!r.is_active).length;
+  
+  const tbody = document.getElementById('skuTbody');
+  if(!rows.length) { tbody.innerHTML = `<tr><td colspan="9" class="empty-state">ยังไม่มีข้อมูล SKU</td></tr>`; return; }
+  tbody.innerHTML = rows.map((r,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td><span class="sku-code" onclick="copyText('${r.sku_code}')">${r.sku_code}</span></td>
+      <td>${r.panel_signature || '-'}</td>
+      <td style="font-family:monospace">${[r.panel1_door_key, r.panel2_door_key, r.panel3_door_key, r.panel4_door_key].filter(Boolean).join(' | ') || '-'}</td>
+      <td style="font-family:monospace">${r.width_cm} x ${r.height_cm}</td>
+      <td>${r.handle_name || r.handle_key || '-'}</td>
+      <td><span class="badge ${r.is_active ? 'badge-green' : 'badge-red'}">${r.is_active ? 'เปิดใช้งาน':'ปิดใช้งาน'}</span></td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="openEditSku('${r.id}')">แก้ไข</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDel('door_skus','${r.id}','loadSkus')">ลบ</button>
+      </td>
+    </tr>
+  `).join('');
+}
+function filterSkus() {
+  const q = document.getElementById('skuSearchInput').value.toLowerCase();
+  renderSkus(rawSkus.filter(r => !q || [
+    r.sku_code,
+    r.panel_signature,
+    r.panel1_door_key,
+    r.panel2_door_key,
+    r.panel3_door_key,
+    r.panel4_door_key,
+    r.handle_name,
+    r.handle_key
+  ].some(v=>v&&String(v).toLowerCase().includes(q))));
+}
+function populateSkuModalDropdowns() {
+  const doorOptions = (rawDoors && rawDoors.length > 0)
+    ? rawDoors.map(d => `<option value="${d.door_key}">${d.door_key} - ${d.name}</option>`)
+    : ['<option value="door1">door1 - ตัวอย่างบาน</option>'];
+  ['skuPanel1DoorKey','skuPanel2DoorKey','skuPanel3DoorKey','skuPanel4DoorKey'].forEach((id) => {
+    const select = document.getElementById(id);
+    if(select) select.innerHTML = doorOptions.join('');
+  });
+
+  const handleKeySel = document.getElementById('skuHandleKey');
+  let handleOpts = [];
+  if (rawHandles && rawHandles.length > 0) {
+    handleOpts = rawHandles.map(h => `<option value="${h.handle_key}">${h.handle_key} - ${h.name}</option>`);
+  } else {
+    handleOpts = [
+      '<option value="handle1">handle1 - มือจับสีเทาเข้ม</option>',
+      '<option value="handle2">handle2 - มือจับสีเงิน</option>'
+    ];
+  }
+  handleKeySel.innerHTML = handleOpts.join('');
+
+  // 4. Door Size Dropdown (from Supabase rawSizes)
+  const sizeSel = document.getElementById('skuDoorSizeSelect');
+  let sizeOpts = [];
+  if (rawSizes && rawSizes.length > 0) {
+    sizeOpts = rawSizes.map(s => `<option value="${s.width_cm}x${s.height_cm}">${s.label || (s.width_cm + ' x ' + s.height_cm + ' ซม.')}</option>`);
+  } else {
+    const defaultSizes = [
+      { w: 200, h: 200 }, { w: 200, h: 220 }, { w: 200, h: 240 },
+      { w: 220, h: 200 }, { w: 220, h: 220 }, { w: 240, h: 200 },
+      { w: 240, h: 220 }, { w: 240, h: 240 }, { w: 280, h: 200 },
+      { w: 280, h: 220 }, { w: 280, h: 240 }, { w: 300, h: 200 },
+      { w: 300, h: 240 }, { w: 300, h: 300 }
+    ];
+    sizeOpts = defaultSizes.map(s => `<option value="${s.w}x${s.h}">${s.w} x ${s.h} ซม.</option>`);
+  }
+  sizeSel.innerHTML = sizeOpts.join('');
+}
+
+function onSkuHandleKeyChange() {
+  const handleKey = document.getElementById('skuHandleKey').value;
+  const match = rawHandles.find(h => h.handle_key === handleKey);
+  if (match) {
+    document.getElementById('skuHandleName').value = match.name || '';
+  }
+  recalcSkuCode();
+}
+
+function onSkuDoorSizeChange() {
+  const val = document.getElementById('skuDoorSizeSelect').value;
+  const parts = val.split('x');
+  if (parts.length === 2) {
+    document.getElementById('skuWidth').value = parts[0];
+    document.getElementById('skuHeight').value = parts[1];
+  }
+  recalcSkuCode();
+}
+
+function normalizeManagerSkuCodePart(value, fallback = 'NA', maxLength = 16) {
+  const cleaned = String(value || '').trim().replace(/[^a-zA-Z0-9]+/g, '').toUpperCase();
+  return cleaned.slice(0, maxLength) || fallback;
+}
+
+function formatManagerDoorKeyForSku(value){
+  const normalized = normalizeManagerSkuCodePart(value, 'NA', 16);
+  const compactDoorMatch = normalized.match(/^DOOR0*(\d+)$/);
+  if(compactDoorMatch) return `D${compactDoorMatch[1]}`;
+  return normalized;
+}
+
+function getSkuPanelAssignmentsFromModal(){
+  return [
+    { key: 'panel1', doorKey: document.getElementById('skuPanel1DoorKey').value },
+    { key: 'panel2', doorKey: document.getElementById('skuPanel2DoorKey').value },
+    { key: 'panel3', doorKey: document.getElementById('skuPanel3DoorKey').value },
+    { key: 'panel4', doorKey: document.getElementById('skuPanel4DoorKey').value }
+  ];
+}
+
+function getManagerPanelSignature(assignments = getSkuPanelAssignmentsFromModal()){
+  return assignments.map(({ doorKey }) => formatManagerDoorKeyForSku(doorKey)).join('-');
+}
+
+function findDoorKeyBySignatureToken(token){
+  const normalizedToken = String(token || '').trim().toUpperCase();
+  const matchedDoor = rawDoors.find((door) => formatManagerDoorKeyForSku(door.door_key) === normalizedToken);
+  return matchedDoor?.door_key || '';
+}
+
+function applyPanelTemplate(signature){
+  const parts = String(signature || '').split('-').filter(Boolean);
+  const selectIds = ['skuPanel1DoorKey','skuPanel2DoorKey','skuPanel3DoorKey','skuPanel4DoorKey'];
+  selectIds.forEach((id, index) => {
+    const token = parts[index] || parts[0] || '';
+    const key = findDoorKeyBySignatureToken(token);
+    const select = document.getElementById(id);
+    if(select && key) select.value = key;
+  });
+  recalcSkuCode();
+}
+
+function recalcSkuCode() {
+  const w = document.getElementById('skuWidth').value || '200';
+  const h = document.getElementById('skuHeight').value || '200';
+  const hKey = document.getElementById('skuHandleKey').value.trim();
+  const assignments = getSkuPanelAssignmentsFromModal();
+  const panelSignature = getManagerPanelSignature(assignments);
+  const sizePart = `${w}x${h}`.replace(/^[^0-9]*/, '') || '200x200';
+  const code = `CGA-${panelSignature}-${sizePart}-${hKey?'H'+(hKey.replace(/\D/g,'') || '1'):'H1'}`;
+  document.getElementById('skuPanelSignature').value = panelSignature;
+  document.getElementById('skuCodePreview').textContent = code;
+  document.getElementById('skuCodeInput').value = code;
+}
+
+function openSkuModal() {
+  document.getElementById('skuId').value = '';
+  populateSkuModalDropdowns();
+  
+  ['skuPanel1DoorKey','skuPanel2DoorKey','skuPanel3DoorKey','skuPanel4DoorKey'].forEach((id) => {
+    const select = document.getElementById(id);
+    if(select && select.options.length) select.selectedIndex = 0;
+  });
+  document.getElementById('skuPanelSignature').value = '';
+  document.getElementById('skuHandleName').value = '';
+  document.getElementById('skuActive').value = 'true';
+  
+  onSkuHandleKeyChange();
+  onSkuDoorSizeChange();
+  recalcSkuCode();
+  openModal('skuModal');
+}
+
+function openEditSku(id) {
+  const r = rawSkus.find(x => x.id === id); if(!r) return;
+  populateSkuModalDropdowns();
+  
+  document.getElementById('skuId').value = r.id;
+  document.getElementById('skuPanel1DoorKey').value = r.panel1_door_key || '';
+  document.getElementById('skuPanel2DoorKey').value = r.panel2_door_key || '';
+  document.getElementById('skuPanel3DoorKey').value = r.panel3_door_key || '';
+  document.getElementById('skuPanel4DoorKey').value = r.panel4_door_key || '';
+  document.getElementById('skuPanelSignature').value = r.panel_signature || '';
+  document.getElementById('skuHandleKey').value = r.handle_key || '';
+  document.getElementById('skuHandleName').value = r.handle_name || '';
+  document.getElementById('skuWidth').value = r.width_cm || 200;
+  document.getElementById('skuHeight').value = r.height_cm || 200;
+  document.getElementById('skuDoorSizeSelect').value = `${r.width_cm || 200}x${r.height_cm || 200}`;
+  document.getElementById('skuActive').value = String(r.is_active);
+  document.getElementById('skuCodePreview').textContent = r.sku_code;
+  document.getElementById('skuCodeInput').value = r.sku_code;
+  openModal('skuModal');
+}
+async function saveSku() {
+  const assignments = getSkuPanelAssignmentsFromModal();
+  const selectedHandle = rawHandles.find(x => x.handle_key === document.getElementById('skuHandleKey').value);
+  const id = document.getElementById('skuId').value;
+  const payload = {
+    sku_code: document.getElementById('skuCodeInput').value || document.getElementById('skuCodePreview').textContent,
+    panel_signature: getManagerPanelSignature(assignments),
+    panel1_door_key: document.getElementById('skuPanel1DoorKey').value,
+    panel2_door_key: document.getElementById('skuPanel2DoorKey').value,
+    panel3_door_key: document.getElementById('skuPanel3DoorKey').value,
+    panel4_door_key: document.getElementById('skuPanel4DoorKey').value,
+    handle_key: document.getElementById('skuHandleKey').value,
+    handle_name: document.getElementById('skuHandleName').value || selectedHandle?.name || '',
+    width_cm: parseInt(document.getElementById('skuWidth').value) || 200,
+    height_cm: parseInt(document.getElementById('skuHeight').value) || 200,
+    is_active: document.getElementById('skuActive').value === 'true',
+    updated_at: new Date().toISOString()
+  };
+
+  const res = await executeSupabaseSave('door_skus', id, payload);
+  if (!res.success) return toast('บันทึก SKU ไม่สำเร็จ: ' + (res.error?.message || 'เกิดข้อผิดพลาด'), 'error');
+  
+  closeModal('skuModal'); loadSkus();
+  if (res.omittedCols && res.omittedCols.length) {
+    toast(`บันทึก SKU สำเร็จ แต่ข้ามคอลัมน์ [${res.omittedCols.join(', ')}] ที่ยังไม่มีในฐานข้อมูล`, 'amber');
+  } else {
+    toast('บันทึก SKU สำเร็จ');
+  }
+}
+
+// Helper for custom sort order
+function sortItemsByOrder(items) {
+  return [...(items || [])].sort((a, b) => {
+    const orderA = (a.sort_order !== null && a.sort_order !== undefined && a.sort_order !== '') ? Number(a.sort_order) : 999999;
+    const orderB = (b.sort_order !== null && b.sort_order !== undefined && b.sort_order !== '') ? Number(b.sort_order) : 999999;
+    if (orderA !== orderB) return orderA - orderB;
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
+}
+
+async function updateInlineSortOrder(table, id, newOrder, reloadFnName) {
+  const val = parseInt(newOrder, 10);
+  const sortOrder = isNaN(val) ? 0 : val;
+  try {
+    const res = await executeSupabaseSave(table, id, { sort_order: sortOrder });
+    if (!res.success) {
+      toast('บันทึกลำดับไม่สำเร็จ: ' + (res.error?.message || 'เกิดข้อผิดพลาด'), 'error');
+      if (typeof window[reloadFnName] === 'function') window[reloadFnName]();
+      return;
+    }
+    toast('อัปเดตลำดับเรียบร้อยแล้ว');
+    if (typeof window[reloadFnName] === 'function') window[reloadFnName]();
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการบันทึกลำดับ: ' + (err.message || ''), 'error');
+  }
+}
+
+// -- 2. SCENES CRUD --------------------------------------------
+async function loadScenes() {
+  try {
+    let { data, error } = await sb.from('room_scenes').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
+    if (error) {
+      const fallbackRes = await sb.from('room_scenes').select('*').order('created_at', { ascending: false });
+      if (fallbackRes.error) throw fallbackRes.error;
+      data = fallbackRes.data;
+    }
+    rawScenes = sortItemsByOrder(data || []);
+    renderScenes(rawScenes);
+  } catch(e) { showEmpty('sceneTbody', e.message); }
+}
+function renderScenes(rows) {
+  document.getElementById('tabBadgeScenes').textContent = rows.length;
+  const tbody = document.getElementById('sceneTbody');
+  if(!rows.length) { tbody.innerHTML = `<tr><td colspan="9" class="empty-state">ยังไม่มีข้อมูลฉากห้อง</td></tr>`; return; }
+  tbody.innerHTML = rows.map((r,i) => `
+    <tr>
+      <td style="text-align:center">
+        <input type="number" class="sort-input" value="${r.sort_order ?? 0}" title="เปลี่ยนตัวเลขแล้วกด Enter หรือคลิกออกเพื่อบันทึก" onchange="updateInlineSortOrder('room_scenes','${r.id}',this.value,'loadScenes')">
+      </td>
+      <td><img src="${r.image_path}" class="thumb-img" onerror="this.src='https://placehold.co/80x80?text=No+Img'"></td>
+      <td style="font-family:monospace;color:var(--gold);font-weight:700">${r.scene_key}</td>
+      <td>${r.name}</td>
+      <td style="font-family:monospace">${r.width || 364} x ${r.height || 405}</td>
+      <td style="font-family:monospace">บน ${r.wall_top_frac || 0.093} / พื้น ${r.floor_frac || 0.952}</td>
+      <td style="font-family:monospace">${r.room_width_cm || 300} x ${r.room_height_cm || 300} ซม.</td>
+      <td><span class="badge ${r.is_active ? 'badge-green':'badge-red'}">${r.is_active ? 'เปิดใช้งาน':'ปิดใช้งาน'}</span></td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="openEditScene('${r.id}')">แก้ไข</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDel('room_scenes','${r.id}','loadScenes')">ลบ</button>
+      </td>
+    </tr>
+  `).join('');
+}
+function filterScenes() {
+  const q = document.getElementById('sceneSearchInput').value.toLowerCase();
+  renderScenes(rawScenes.filter(r => !q || r.name.toLowerCase().includes(q) || r.scene_key.toLowerCase().includes(q)));
+}
+function openSceneModal() {
+  document.getElementById('sceneId').value = '';
+  document.getElementById('sceneKeyInput').value = 'scene-' + Date.now().toString().slice(-4);
+  document.getElementById('sceneSortOrderInput').value = '0';
+  document.getElementById('sceneNameInput').value = '';
+  document.getElementById('scenePathInput').value = '';
+  document.getElementById('sceneWInput').value = '364';
+  document.getElementById('sceneHInput').value = '405';
+  document.getElementById('sceneFloorFracInput').value = '0.952';
+  document.getElementById('sceneWallTopFracInput').value = '0.093';
+  document.getElementById('sceneRoomWidthCmInput').value = '300';
+  document.getElementById('sceneRoomHeightCmInput').value = '300';
+  document.getElementById('sceneActiveInput').value = 'true';
+  document.getElementById('scenePreviewBox').style.display = 'none';
+  openModal('sceneModal');
+}
+function openEditScene(id) {
+  const r = rawScenes.find(x => x.id === id); if(!r) return;
+  document.getElementById('sceneId').value = r.id;
+  document.getElementById('sceneKeyInput').value = r.scene_key;
+  document.getElementById('sceneSortOrderInput').value = r.sort_order ?? 0;
+  document.getElementById('sceneNameInput').value = r.name;
+  document.getElementById('scenePathInput').value = r.image_path;
+  document.getElementById('sceneWInput').value = r.width || 364;
+  document.getElementById('sceneHInput').value = r.height || 405;
+  document.getElementById('sceneFloorFracInput').value = r.floor_frac || 0.952;
+  document.getElementById('sceneWallTopFracInput').value = r.wall_top_frac || 0.093;
+  document.getElementById('sceneRoomWidthCmInput').value = r.room_width_cm || 300;
+  document.getElementById('sceneRoomHeightCmInput').value = r.room_height_cm || 300;
+  document.getElementById('sceneActiveInput').value = String(r.is_active !== false);
+  openModal('sceneModal');
+}
+async function saveScene() {
+  const id = document.getElementById('sceneId').value;
+  const payload = {
+    scene_key: document.getElementById('sceneKeyInput').value.trim(),
+    sort_order: parseInt(document.getElementById('sceneSortOrderInput').value) || 0,
+    name: document.getElementById('sceneNameInput').value.trim(),
+    image_path: document.getElementById('scenePathInput').value.trim(),
+    width: parseInt(document.getElementById('sceneWInput').value) || 364,
+    height: parseInt(document.getElementById('sceneHInput').value) || 405,
+    floor_frac: parseFloat(document.getElementById('sceneFloorFracInput').value) || 0.952,
+    wall_top_frac: parseFloat(document.getElementById('sceneWallTopFracInput').value) || 0.093,
+    room_width_cm: parseInt(document.getElementById('sceneRoomWidthCmInput').value) || 300,
+    room_height_cm: parseInt(document.getElementById('sceneRoomHeightCmInput').value) || 300,
+    is_active: document.getElementById('sceneActiveInput').value === 'true'
+  };
+  const res = await executeSupabaseSave('room_scenes', id, payload);
+  if (!res.success) return toast('บันทึกฉากห้องไม่สำเร็จ: ' + (res.error?.message || 'เกิดข้อผิดพลาด'), 'error');
+
+  closeModal('sceneModal'); loadScenes();
+  if (res.omittedCols && res.omittedCols.length) {
+    toast(`บันทึกฉากห้องสำเร็จ แต่ข้ามคอลัมน์ [${res.omittedCols.join(', ')}] ที่ยังไม่มีในฐานข้อมูล`, 'amber');
+  } else {
+    toast('บันทึกฉากห้องสำเร็จ');
+  }
+}
+
+// -- 3. DOORS CRUD ---------------------------------------------
+async function loadDoors() {
+  try {
+    let { data, error } = await sb.from('door_products').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
+    if (error) {
+      const fallbackRes = await sb.from('door_products').select('*').order('created_at', { ascending: false });
+      if (fallbackRes.error) throw fallbackRes.error;
+      data = fallbackRes.data;
+    }
+    rawDoors = sortItemsByOrder(data || []);
+    renderDoors(rawDoors);
+  } catch(e) { showEmpty('doorTbody', e.message); }
+}
+function renderDoors(rows) {
+  document.getElementById('tabBadgeDoors').textContent = rows.length;
+  const tbody = document.getElementById('doorTbody');
+  if(!rows.length) { tbody.innerHTML = `<tr><td colspan="7" class="empty-state">ยังไม่มีข้อมูลบานประตู</td></tr>`; return; }
+  tbody.innerHTML = rows.map((r,i) => `
+    <tr>
+      <td style="text-align:center">
+        <input type="number" class="sort-input" value="${r.sort_order ?? 0}" title="เปลี่ยนตัวเลขแล้วกด Enter หรือคลิกออกเพื่อบันทึก" onchange="updateInlineSortOrder('door_products','${r.id}',this.value,'loadDoors')">
+      </td>
+      <td><img src="${r.image_path}" class="thumb-img" onerror="this.src='https://placehold.co/80x80?text=No+Img'"></td>
+      <td style="font-family:monospace;color:var(--gold);font-weight:700">${r.door_key}</td>
+      <td>${r.name}</td>
+      <td style="font-family:monospace">${r.canvas_w || 299} x ${r.canvas_h || 509}</td>
+      <td><span class="badge ${r.is_active ? 'badge-green':'badge-red'}">${r.is_active ? 'เปิดใช้งาน':'ปิดใช้งาน'}</span></td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="openEditDoor('${r.id}')">แก้ไข</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDel('door_products','${r.id}','loadDoors')">ลบ</button>
+      </td>
+    </tr>
+  `).join('');
+}
+function filterDoors() {
+  const q = document.getElementById('doorSearchInput').value.toLowerCase();
+  renderDoors(rawDoors.filter(r => !q || r.name.toLowerCase().includes(q) || r.door_key.toLowerCase().includes(q)));
+}
+function openDoorModal() {
+  document.getElementById('doorId').value = '';
+  document.getElementById('doorKeyInput').value = 'door' + (rawDoors.length + 1);
+  document.getElementById('doorSortOrderInput').value = '0';
+  document.getElementById('doorNameInput').value = '';
+  document.getElementById('doorPathInput').value = '';
+  document.getElementById('doorCanvasWInput').value = '299';
+  document.getElementById('doorCanvasHInput').value = '509';
+  document.getElementById('doorBottomFracInput').value = '0.9862';
+  document.getElementById('doorHandleXFracInput').value = '';
+  document.getElementById('doorHandleYFracInput').value = '';
+  document.getElementById('doorHandleScaleInput').value = '';
+  document.getElementById('doorActiveInput').value = 'true';
+  document.getElementById('doorPreviewBox').style.display = 'none';
+  openModal('doorModal');
+}
+function openEditDoor(id) {
+  const r = rawDoors.find(x => x.id === id); if(!r) return;
+  document.getElementById('doorId').value = r.id;
+  document.getElementById('doorKeyInput').value = r.door_key;
+  document.getElementById('doorSortOrderInput').value = r.sort_order ?? 0;
+  document.getElementById('doorNameInput').value = r.name;
+  document.getElementById('doorPathInput').value = r.image_path;
+  document.getElementById('doorCanvasWInput').value = r.canvas_w || 299;
+  document.getElementById('doorCanvasHInput').value = r.canvas_h || 509;
+  document.getElementById('doorBottomFracInput').value = r.bottom_frac || 0.9862;
+  document.getElementById('doorHandleXFracInput').value = r.handle_x_frac ?? '';
+  document.getElementById('doorHandleYFracInput').value = r.handle_y_frac ?? '';
+  document.getElementById('doorHandleScaleInput').value = r.handle_scale ?? '';
+  document.getElementById('doorActiveInput').value = String(r.is_active !== false);
+  openModal('doorModal');
+}
+async function saveDoor() {
+  const id = document.getElementById('doorId').value;
+  const payload = {
+    door_key: document.getElementById('doorKeyInput').value.trim(),
+    sort_order: parseInt(document.getElementById('doorSortOrderInput').value) || 0,
+    name: document.getElementById('doorNameInput').value.trim(),
+    image_path: document.getElementById('doorPathInput').value.trim(),
+    canvas_w: parseInt(document.getElementById('doorCanvasWInput').value) || 299,
+    canvas_h: parseInt(document.getElementById('doorCanvasHInput').value) || 509,
+    bottom_frac: parseFloat(document.getElementById('doorBottomFracInput').value) || 0.9862,
+    handle_x_frac: document.getElementById('doorHandleXFracInput').value ? parseFloat(document.getElementById('doorHandleXFracInput').value) : null,
+    handle_y_frac: document.getElementById('doorHandleYFracInput').value ? parseFloat(document.getElementById('doorHandleYFracInput').value) : null,
+    handle_scale: document.getElementById('doorHandleScaleInput').value ? parseFloat(document.getElementById('doorHandleScaleInput').value) : null,
+    is_active: document.getElementById('doorActiveInput').value === 'true'
+  };
+  
+  const res = await executeSupabaseSave('door_products', id, payload);
+  if (!res.success) return toast('บันทึกบานประตูไม่สำเร็จ: ' + (res.error?.message || 'เกิดข้อผิดพลาด'), 'error');
+
+  closeModal('doorModal'); loadDoors();
+  if (res.omittedCols && res.omittedCols.length) {
+    toast(`บันทึกบานประตูสำเร็จ แต่ข้ามคอลัมน์ [${res.omittedCols.join(', ')}] ที่ยังไม่มีในฐานข้อมูล`, 'amber');
+  } else {
+    toast('บันทึกบานประตูสำเร็จ');
+  }
+}
+
+// -- 4. HANDLES CRUD -------------------------------------------
+async function loadHandles() {
+  try {
+    let { data, error } = await sb.from('handle_products').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
+    if (error) {
+      const fallbackRes = await sb.from('handle_products').select('*').order('created_at', { ascending: false });
+      if (fallbackRes.error) throw fallbackRes.error;
+      data = fallbackRes.data;
+    }
+    rawHandles = sortItemsByOrder(data || []);
+    renderHandles(rawHandles);
+  } catch(e) { showEmpty('handleTbody', e.message); }
+}
+function renderHandles(rows) {
+  document.getElementById('tabBadgeHandles').textContent = rows.length;
+  const tbody = document.getElementById('handleTbody');
+  if(!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="empty-state">ยังไม่มีข้อมูลมือจับ</td></tr>`; return; }
+  tbody.innerHTML = rows.map((r,i) => `
+    <tr>
+      <td style="text-align:center">
+        <input type="number" class="sort-input" value="${r.sort_order ?? 0}" title="เปลี่ยนตัวเลขแล้วกด Enter หรือคลิกออกเพื่อบันทึก" onchange="updateInlineSortOrder('handle_products','${r.id}',this.value,'loadHandles')">
+      </td>
+      <td><img src="${r.image_path}" class="thumb-img" onerror="this.src='https://placehold.co/80x80?text=No+Img'"></td>
+      <td style="font-family:monospace;color:var(--gold);font-weight:700">${r.handle_key}</td>
+      <td>${r.name}</td>
+      <td><span class="badge ${r.is_active ? 'badge-green':'badge-red'}">${r.is_active ? 'เปิดใช้งาน':'ปิดใช้งาน'}</span></td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="openEditHandle('${r.id}')">แก้ไข</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDel('handle_products','${r.id}','loadHandles')">ลบ</button>
+      </td>
+    </tr>
+  `).join('');
+}
+function filterHandles() {
+  const q = document.getElementById('handleSearchInput').value.toLowerCase();
+  renderHandles(rawHandles.filter(r => !q || r.name.toLowerCase().includes(q) || r.handle_key.toLowerCase().includes(q)));
+}
+function openHandleModal() {
+  document.getElementById('handleId').value = '';
+  document.getElementById('handleKeyInput').value = 'handle' + (rawHandles.length + 1);
+  document.getElementById('handleSortOrderInput').value = '0';
+  document.getElementById('handleNameInput').value = '';
+  document.getElementById('handlePathInput').value = '';
+  document.getElementById('handleXFracInput').value = '';
+  document.getElementById('handleYFracInput').value = '';
+  document.getElementById('handleScaleInput').value = '';
+  document.getElementById('handleActiveInput').value = 'true';
+  document.getElementById('handlePreviewBox').style.display = 'none';
+  openModal('handleModal');
+}
+function openEditHandle(id) {
+  const r = rawHandles.find(x => x.id === id); if(!r) return;
+  document.getElementById('handleId').value = r.id;
+  document.getElementById('handleKeyInput').value = r.handle_key;
+  document.getElementById('handleSortOrderInput').value = r.sort_order ?? 0;
+  document.getElementById('handleNameInput').value = r.name;
+  document.getElementById('handlePathInput').value = r.image_path;
+  document.getElementById('handleXFracInput').value = r.handle_x_frac ?? '';
+  document.getElementById('handleYFracInput').value = r.handle_y_frac ?? '';
+  document.getElementById('handleScaleInput').value = r.handle_scale ?? '';
+  document.getElementById('handleActiveInput').value = String(r.is_active !== false);
+  openModal('handleModal');
+}
+async function saveHandle() {
+  const id = document.getElementById('handleId').value;
+  const payload = {
+    handle_key: document.getElementById('handleKeyInput').value.trim(),
+    sort_order: parseInt(document.getElementById('handleSortOrderInput').value) || 0,
+    name: document.getElementById('handleNameInput').value.trim(),
+    image_path: document.getElementById('handlePathInput').value.trim(),
+    handle_x_frac: document.getElementById('handleXFracInput').value ? parseFloat(document.getElementById('handleXFracInput').value) : null,
+    handle_y_frac: document.getElementById('handleYFracInput').value ? parseFloat(document.getElementById('handleYFracInput').value) : null,
+    handle_scale: document.getElementById('handleScaleInput').value ? parseFloat(document.getElementById('handleScaleInput').value) : null,
+    is_active: document.getElementById('handleActiveInput').value === 'true'
+  };
+  const res = await executeSupabaseSave('handle_products', id, payload);
+  if (!res.success) return toast('บันทึกมือจับไม่สำเร็จ: ' + (res.error?.message || 'เกิดข้อผิดพลาด'), 'error');
+
+  closeModal('handleModal'); loadHandles();
+  if (res.omittedCols && res.omittedCols.length) {
+    toast(`บันทึกมือจับสำเร็จ แต่ข้ามคอลัมน์ [${res.omittedCols.join(', ')}] ที่ยังไม่มีในฐานข้อมูล`, 'amber');
+  } else {
+    toast('บันทึกมือจับสำเร็จ');
+  }
+}
+
+// -- 5. SIZES CRUD ---------------------------------------------
+async function loadSizes() {
+  try {
+    const { data, error } = await sb.from('door_sizes').select('*').order('width_cm', { ascending: true });
+    if(error) throw error;
+    rawSizes = data || [];
+    renderSizes(rawSizes);
+  } catch(e) { showEmpty('sizeTbody', e.message); }
+}
+function renderSizes(rows) {
+  document.getElementById('tabBadgeSizes').textContent = rows.length;
+  const tbody = document.getElementById('sizeTbody');
+  if(!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="empty-state">ยังไม่มีข้อมูลขนาดประตู</td></tr>`; return; }
+  tbody.innerHTML = rows.map((r,i) => `
+    <tr>
+      <td style="font-family:monospace;color:var(--gold);font-weight:700">${r.size_key}</td>
+      <td style="font-weight:600">${r.label}</td>
+      <td style="font-family:monospace">${r.width_cm}</td>
+      <td style="font-family:monospace">${r.height_cm}</td>
+      <td><span class="badge ${r.is_active!==false ? 'badge-green':'badge-red'}">${r.is_active!==false ? 'เปิดใช้งาน':'ปิดใช้งาน'}</span></td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="confirmDel('door_sizes','${r.id}','loadSizes')">ลบ</button>
+      </td>
+    </tr>
+  `).join('');
+}
+function filterSizes() {
+  const q = document.getElementById('sizeSearchInput').value.toLowerCase();
+  renderSizes(rawSizes.filter(r => !q || r.size_key.toLowerCase().includes(q) || r.label.toLowerCase().includes(q)));
+}
+function updateSizeKeyLabel() {
+  const w = document.getElementById('sizeWidthInput').value || 200;
+  const h = document.getElementById('sizeHeightInput').value || 200;
+  document.getElementById('sizeKeyInput').value = `${w}x${h}`;
+  document.getElementById('sizeLabelInput').value = `${w} x ${h} ซม.`;
+}
+function openSizeModal() {
+  document.getElementById('sizeId').value = '';
+  document.getElementById('sizeWidthInput').value = '200';
+  document.getElementById('sizeHeightInput').value = '200';
+  updateSizeKeyLabel();
+  openModal('sizeModal');
+}
+async function saveSize() {
+  const w = parseInt(document.getElementById('sizeWidthInput').value) || 200;
+  const h = parseInt(document.getElementById('sizeHeightInput').value) || 200;
+  const payload = {
+    size_key: `${w}x${h}`,
+    label: `${w} x ${h} ซม.`,
+    width_cm: w,
+    height_cm: h,
+    is_active: true
+  };
+  const { error } = await sb.from('door_sizes').insert([payload]);
+  if(error) return toast('บันทึกขนาดประตูไม่สำเร็จ: ' + error.message, 'error');
+  closeModal('sizeModal'); loadSizes(); toast('บันทึกขนาดประตูสำเร็จ');
+}
+
+// -- Generic Helpers -------------------------------------------
+async function executeSupabaseSave(table, id, payload) {
+  let currentPayload = { ...payload };
+  let omittedCols = [];
+
+  for (let i = 0; i < 5; i++) {
+    const res = id 
+      ? await sb.from(table).update(currentPayload).eq('id', id)
+      : await sb.from(table).insert([currentPayload]);
+
+    if (!res.error) {
+      return { success: true, omittedCols };
+    }
+
+    const errMsg = res.error?.message || '';
+    const match = errMsg.match(/Could not find the '([^']+)' column/) ||
+                  errMsg.match(/column ["']?([a-zA-Z0-9_]+)["']? of relation/i) ||
+                  errMsg.match(/column ["']?([a-zA-Z0-9_]+)["']? does not exist/i);
+
+    if (match && match[1] && currentPayload.hasOwnProperty(match[1])) {
+      const missingCol = match[1];
+      omittedCols.push(missingCol);
+      delete currentPayload[missingCol];
+      continue;
+    }
+
+    return { success: false, error: res.error, omittedCols };
+  }
+
+  return { success: false, error: { message: 'บันทึกไม่สำเร็จเนื่องจากโครงสร้างตารางไม่ตรงกัน' }, omittedCols };
+}
+
+function confirmDel(table, id, reloadFnName) {
+  document.getElementById('confirmMsg').textContent = 'คุณต้องการลบข้อมูลรายการนี้ออกจากระบบใช่หรือไม่';
+  document.getElementById('confirmOkBtn').onclick = async () => {
+    closeConfirm();
+    const { error } = await sb.from(table).delete().eq('id', id);
+    if(error) return toast('ลบข้อมูลไม่สำเร็จ: ' + error.message, 'error');
+    toast('ลบข้อมูลเรียบร้อยแล้ว', 'success');
+    window[reloadFnName]();
+  };
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('open'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function showEmpty(tbodyId, msg) { document.getElementById(tbodyId).innerHTML = `<tr><td colspan="10" class="empty-state">เกิดข้อผิดพลาด: ${msg}</td></tr>`; }
+function toggleSql() {
+  const el = document.getElementById('sqlDetail'); el.classList.toggle('open');
+  document.querySelector('.sql-toggle').textContent = el.classList.contains('open') ? 'ซ่อน SQL' : 'ดู SQL Schema สำหรับติดตั้งครั้งแรก';
+}
+function toast(msg, type='success') {
+  const el = document.createElement('div'); el.className = `toast ${type}`; el.textContent = msg;
+  const c = document.getElementById('toastContainer'); c.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => toast(`คัดลอก ${text} แล้ว`, 'success'));
+}
+function exportSkuCSV() {
+  if (!rawSkus.length) return toast('ไม่มีข้อมูลสำหรับส่งออก', 'error');
+  const cols = ['sku_code','panel_signature','panel1_door_key','panel2_door_key','panel3_door_key','panel4_door_key','width_cm','height_cm','handle_key','handle_name','is_active'];
+  const csv  = [cols.join(',')].concat(rawSkus.map(r => cols.map(c => JSON.stringify(r[c] ?? '')).join(','))).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a'); a.href = url; a.download = `skus_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  toast('ส่งออก CSV สำเร็จ', 'success');
+}
+</script>
+</body>
+</html>
